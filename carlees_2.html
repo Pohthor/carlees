@@ -1,0 +1,2646 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>كارليس — نظام إدارة تأجير السيارات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2224%22 fill=%22%232563eb%22/><path d=%22M24 62 L30 44 Q32 38 39 38 L61 38 Q68 38 70 44 L76 62 Z M22 62 L78 62 L78 72 Q78 76 74 76 L70 76 Q66 76 66 72 L66 70 L34 70 L34 72 Q34 76 30 76 L26 76 Q22 76 22 72 Z%22 fill=%22white%22/></svg>">
+<style>
+:root{
+  --bg:#f1f5f9;
+  --card:#ffffff;
+  --border:#e6eaf0;
+  --text:#0f172a;
+  --muted:#64748b;
+  --faint:#94a3b8;
+  --primary:#2563eb;
+  --primary-d:#1d4ed8;
+  --primary-soft:#eff6ff;
+  --green:#16a34a;--green-soft:#ecfdf5;
+  --orange:#f97316;--orange-soft:#fff7ed;
+  --amber:#d97706;--amber-soft:#fffbeb;
+  --red:#ef4444;--red-soft:#fef2f2;
+  --teal:#14b8a6;
+  --r:16px;
+  --sh:0 1px 2px rgba(15,23,42,.05);
+  --sh-lg:0 18px 45px rgba(2,6,23,.16);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'IBM Plex Sans Arabic',-apple-system,'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px;border:2px solid var(--bg)}
+::-webkit-scrollbar-track{background:transparent}
+button{font-family:inherit}
+a{color:inherit;text-decoration:none}
+
+/* ===== Layout ===== */
+.app{display:flex;min-height:100vh}
+html,body{overflow-x:hidden;overflow-x:clip}
+aside.sidebar{width:258px;flex-shrink:0;background:#fff;border-inline-end:1px solid var(--border);height:100vh;position:sticky;top:0;display:flex;flex-direction:column;z-index:50}
+.app.collapsed aside.sidebar{display:none}
+main{flex:1;min-width:0;display:flex;flex-direction:column}
+.content{padding:26px 26px 70px;width:100%;max-width:1180px;margin-inline:auto}
+
+/* ===== Sidebar ===== */
+.side-head{display:flex;gap:10px;align-items:center;padding:18px 16px 12px}
+.logo-sq{width:38px;height:38px;border-radius:11px;background:var(--primary);color:#fff;display:grid;place-items:center;flex-shrink:0}
+.side-title b{font-size:16.5px;font-weight:700;display:block;line-height:1.2}
+.side-title span{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
+nav#navRoot{flex:1;overflow-y:auto;padding:2px 10px 12px}
+.nav-sec{font-size:10.5px;color:var(--faint);padding:15px 10px 5px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8.5px 10px;border-radius:10px;font-size:13.5px;color:#475569;cursor:pointer;margin-bottom:2px;transition:background .15s,color .15s}
+.nav-item svg{flex-shrink:0}
+.nav-item:hover{background:#f1f5f9}
+.nav-item.active{background:var(--primary-soft);color:var(--primary);font-weight:700}
+.nbadge{margin-inline-start:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:99px;display:grid;place-items:center;padding:0 4px}
+.side-foot{border-top:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:9px;color:#475569;font-size:13px;cursor:pointer}
+.side-foot:hover{color:var(--primary)}
+
+/* ===== Topbar ===== */
+.topbar{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);height:62px;display:flex;align-items:center;gap:14px;padding:0 20px}
+.tb-title{display:flex;gap:11px;align-items:center;font-weight:700;font-size:15px;color:#1e293b;white-space:nowrap}
+.tb-title .pn{cursor:pointer;color:#64748b;display:grid;place-items:center}
+.tb-title .pn:hover{color:var(--primary)}
+.tb-search{flex:1;max-width:430px;margin-inline:auto;position:relative}
+.tb-search .sic{position:absolute;inset-inline-start:12px;top:50%;transform:translateY(-50%);color:var(--faint);pointer-events:none;display:grid}
+.tb-search input{width:100%;height:38px;border:1px solid var(--border);border-radius:11px;background:#f8fafc;padding-inline:36px 14px;font:inherit;font-size:13px;outline:0;transition:border-color .15s, box-shadow .15s}
+.tb-search input:focus{border-color:#bfdbfe;background:#fff;box-shadow:0 0 0 3px #dbeafe}
+.search-pop{position:absolute;top:45px;inset-inline:0;background:#fff;border:1px solid var(--border);border-radius:13px;box-shadow:var(--sh-lg);overflow:hidden;display:none;z-index:80}
+.search-pop.open{display:block}
+.sp-row{display:flex;align-items:center;gap:10px;padding:10px 13px;font-size:13px;cursor:pointer}
+.sp-row:hover{background:#f8fafc}
+.sp-row .tag{margin-inline-start:auto;font-size:10.5px;color:var(--faint);background:#f1f5f9;border-radius:99px;padding:2px 8px}
+.sp-empty{padding:14px;font-size:12.5px;color:var(--muted);text-align:center}
+.tb-actions{display:flex;align-items:center;gap:10px;position:relative}
+.icon-btn{width:38px;height:38px;border-radius:11px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;color:#475569;cursor:pointer;position:relative;transition:.15s}
+.icon-btn:hover{border-color:#cbd5e1;color:var(--text)}
+.icon-btn .dot{position:absolute;top:-6px;inset-inline-end:-6px;background:var(--red);color:#fff;border-radius:99px;font-size:10px;font-weight:700;min-width:18px;height:18px;display:grid;place-items:center;border:2px solid #fff}
+.avatar{width:38px;height:38px;border-radius:99px;background:#0f172a;color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;cursor:default}
+.lang-btn{height:38px;border:1px solid var(--border);background:#fff;border-radius:11px;padding:0 12px;display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:12.5px;font-weight:700;color:#334155;cursor:pointer}
+.lang-btn:hover{border-color:#cbd5e1}
+
+/* ===== Buttons / pills / inputs ===== */
+.btn{height:38px;padding:0 15px;border-radius:11px;font:inherit;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:7px;cursor:pointer;border:0;transition:.15s;white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-d)}
+.btn-ghost{background:#fff;border:1px solid var(--border);color:#334155}
+.btn-ghost:hover{border-color:#cbd5e1;background:#f8fafc}
+.btn-soft{background:var(--primary-soft);color:var(--primary)}
+.btn-soft:hover{background:#dbeafe}
+.btn-danger-soft{background:var(--red-soft);color:#dc2626}
+.btn-danger-soft:hover{background:#fee2e2}
+.btn-sm{height:31px;padding:0 11px;font-size:12px;border-radius:9px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3.5px 10px;border-radius:99px;line-height:1}
+.pill-blue{background:var(--primary);color:#fff}
+.pill-gray{background:#fff;color:#64748b;border:1px solid var(--border)}
+.pill-green{background:var(--green-soft);color:#15803d}
+.pill-orange{background:var(--orange-soft);color:#c2410c}
+.pill-amber{background:var(--amber-soft);color:#b45309}
+.pill-red{background:var(--red-soft);color:#dc2626}
+.pill-teal{background:#f0fdfa;color:#0f766e}
+.inp{width:100%;height:40px;border:1px solid var(--border);border-radius:11px;padding:0 12px;font:inherit;font-size:13.5px;outline:0;background:#fff;color:var(--text);transition:border-color .15s, box-shadow .15s}
+.inp:focus{border-color:#93c5fd;box-shadow:0 0 0 3px #dbeafe}
+textarea.inp{height:auto;padding:10px 12px;resize:vertical}
+select.inp{appearance:auto}
+.lbl2{font-size:12px;font-weight:700;color:#475569;display:block;margin-bottom:6px}
+.frow{margin-bottom:14px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hint{font-size:11.5px;color:var(--faint);margin-top:5px}
+
+/* ===== Cards ===== */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh)}
+.card-h{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 4px;font-weight:700;font-size:14.5px;gap:10px}
+.card-h .hint-ic{color:var(--primary);display:grid}
+.card-b{padding:12px 18px 18px}
+.hero{margin-bottom:4px}
+.hero h1{font-size:29px;font-weight:700;letter-spacing:-.3px}
+.hero p{color:var(--muted);margin-top:4px;font-size:13.5px}
+.page-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.page-h h2{font-size:20px;font-weight:700}
+.page-h p{font-size:12.5px;color:var(--muted);margin-top:3px}
+
+/* ===== Dashboard ===== */
+.grid-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:22px}
+.stat{padding:18px;background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh)}
+.stat .top{display:flex;justify-content:space-between;align-items:flex-start}
+.iconsq{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;flex-shrink:0}
+.trend{font-size:11px;font-weight:700;background:#dcfce7;color:#15803d;padding:3px 9px;border-radius:99px}
+.stat .lbl{color:var(--muted);font-size:12.5px;margin-top:13px}
+.stat .val{font-size:23px;font-weight:700;margin-top:3px;letter-spacing:-.2px}
+.grid-2{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-top:16px}
+.leg{display:flex;align-items:center;gap:9px;font-size:13px;padding:5.5px 0;color:#334155}
+.leg .ldot{width:9px;height:9px;border-radius:99px;flex-shrink:0}
+.leg b{margin-inline-start:auto;font-weight:700}
+.crow{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--border);border-radius:14px;margin-top:10px;cursor:pointer;transition:.15s;background:#fff}
+.crow:hover{border-color:#bfdbfe;background:#fafcff}
+.cavatar{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;flex-shrink:0}
+.cmeta{min-width:0}
+.cmeta b{font-size:13.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmeta span{font-size:11.5px;color:var(--muted);direction:ltr;display:inline-block}
+.cend{margin-inline-start:auto;text-align:left;flex-shrink:0}
+.cend b{display:block;font-size:14px;margin-bottom:5px}
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.qa{border:1px solid var(--border);border-radius:14px;padding:17px 8px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;font-size:12.5px;font-weight:600;color:#334155;background:#fff;transition:.15s}
+.qa:hover{border-color:#bfdbfe;transform:translateY(-1px);box-shadow:0 6px 16px rgba(37,99,235,.08)}
+.qa .iconsq{width:40px;height:40px;border-radius:11px}
+
+/* ===== Tables / chips ===== */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-size:11.5px;color:var(--faint);text-align:start;padding:11px 10px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap}
+.tbl td{padding:12.5px 10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{transition:background .12s}
+.tbl tbody tr:hover{background:#f8fafc}
+.tbl .clickable{cursor:pointer}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:#fff;font-size:12.5px;cursor:pointer;font-weight:600;color:#475569;transition:.15s}
+.chip:hover{border-color:#cbd5e1}
+.chip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.plate{direction:ltr;display:inline-flex;align-items:stretch;border:1.5px solid #cbd5e1;border-radius:7px;overflow:hidden;font-size:11px;font-weight:700;background:#fff}
+.plate i{background:#f1f5f9;padding:2.5px 7px;font-style:normal;border-inline-start:1.5px solid #cbd5e1}
+.plate b{padding:2.5px 8px;letter-spacing:1.5px}
+.empty{padding:34px 14px;text-align:center;color:var(--muted);font-size:13px}
+.banner{display:flex;gap:10px;align-items:flex-start;background:var(--primary-soft);border:1px solid #dbeafe;color:#1e40af;border-radius:13px;padding:12px 14px;font-size:12.5px;line-height:1.7;margin-bottom:16px}
+.banner.amberish{background:var(--amber-soft);border-color:#fde68a;color:#92400e}
+
+/* ===== Vehicles ===== */
+.vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
+.vcard{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:11px}
+.vtop{display:flex;justify-content:space-between;align-items:flex-start}
+.vimg{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-size:26px}
+.vname b{display:block;font-size:14.5px}
+.vname span{font-size:11.5px;color:var(--muted)}
+.vspecs{display:flex;gap:14px;font-size:12px;color:var(--muted);align-items:center;flex-wrap:wrap}
+.vspecs .sp{display:inline-flex;align-items:center;gap:5px}
+.vprice{font-weight:700;color:var(--primary);font-size:14px}
+.vprice small{font-weight:500;color:var(--muted);font-size:11px}
+.vrenter{font-size:12px;color:#334155;background:#f8fafc;border:1px dashed var(--border);border-radius:10px;padding:7px 10px}
+.vbtns{display:flex;gap:8px;margin-top:2px}
+.vbtns .btn{flex:1;justify-content:center}
+
+/* ===== Kanban ===== */
+.kwrap{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px;align-items:start}
+.kcol{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.kcol h4{display:flex;align-items:center;gap:8px;font-size:13.5px;margin-bottom:12px}
+.kcol h4 .kc{margin-inline-start:auto;font-size:11px;background:#f1f5f9;border-radius:99px;padding:2px 9px;color:var(--muted)}
+.kitem{border:1px solid var(--border);border-radius:12px;padding:11px;margin-bottom:9px;background:#fff}
+.kitem b{font-size:13px;display:block;margin-bottom:4px}
+.kitem .ksub{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.kitem .kact{margin-top:9px;display:flex;gap:7px}
+
+/* ===== Tracking ===== */
+.track-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:start}
+.map-svg{width:100%;display:block;border-radius:13px}
+.pulse{animation:pulse 1.8s ease-out infinite;transform-origin:center;transform-box:fill-box}
+@keyframes pulse{0%{opacity:.7;transform:scale(.6)}70%{opacity:0;transform:scale(2.1)}100%{opacity:0;transform:scale(2.1)}}
+.trow{display:flex;gap:11px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #f1f5f9}
+.trow:last-child{border-bottom:0}
+.trow .tdot{width:10px;height:10px;border-radius:99px;margin-top:5px;flex-shrink:0}
+.trow b{font-size:13.5px;display:block}
+.trow span{font-size:11.5px;color:var(--muted);display:block;margin-top:3px;line-height:1.6}
+
+/* ===== Maintenance ===== */
+.mitem{display:flex;gap:14px;background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;align-items:flex-start}
+.mbar{width:4px;border-radius:99px;align-self:stretch;flex-shrink:0}
+.mmain{flex:1;min-width:0}
+.mmain b{font-size:14px}
+.mmain .msub{font-size:12px;color:var(--muted);margin-top:4px;display:flex;gap:13px;flex-wrap:wrap}
+.mside{display:flex;flex-direction:column;align-items:flex-end;gap:9px;flex-shrink:0}
+
+/* ===== Modal ===== */
+.ovl{position:fixed;inset:0;background:rgba(2,6,23,.46);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:120;padding:18px;animation:fade .18s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{background:#fff;border-radius:20px;width:100%;max-width:560px;max-height:92vh;overflow:auto;box-shadow:var(--sh-lg);animation:pop .2s ease}
+.modal.wide{max-width:680px}
+@keyframes pop{from{transform:translateY(10px) scale(.985);opacity:0}to{transform:none;opacity:1}}
+.m-h{display:flex;justify-content:space-between;align-items:center;padding:17px 20px;border-bottom:1px solid var(--border);font-weight:700;font-size:15px;position:sticky;top:0;background:#fff;z-index:5;border-radius:20px 20px 0 0}
+.m-x{width:32px;height:32px;border-radius:9px;border:0;background:#f1f5f9;color:#475569;display:grid;place-items:center;cursor:pointer}
+.m-x:hover{background:#e2e8f0}
+.m-b{padding:20px}
+.m-f{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;position:sticky;bottom:0;background:#fff;border-radius:0 0 20px 20px}
+.steps{display:flex;gap:6px;margin-bottom:20px}
+.stp{flex:1;height:5px;border-radius:99px;background:#e2e8f0;transition:background .2s}
+.stp.on{background:var(--primary)}
+.selcard{border:1.5px solid var(--border);border-radius:13px;padding:12px 13px;cursor:pointer;transition:.13s;background:#fff;margin-bottom:9px}
+.selcard:hover{border-color:#bfdbfe}
+.selcard.on{border-color:var(--primary);background:var(--primary-soft)}
+.selcard b{font-size:13.5px}
+.selcard .ssub{font-size:11.5px;color:var(--muted);margin-top:3px}
+.sumrow{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px dashed #e8edf3;color:#334155}
+.sumrow:last-child{border-bottom:0}
+.sumrow.tot{font-weight:700;font-size:14.5px;color:var(--text);border-top:1.5px solid var(--border);border-bottom:0;margin-top:4px;padding-top:12px}
+.nafath-box{border:1.5px dashed #c7d6f5;border-radius:16px;padding:26px 16px;text-align:center;background:#fbfdff}
+.nafath-num{font-size:34px;font-weight:700;color:var(--primary);letter-spacing:2px;margin:10px 0 4px}
+.spinner{width:22px;height:22px;border:3px solid #dbeafe;border-top-color:var(--primary);border-radius:99px;animation:spin .8s linear infinite;margin:12px auto 0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sigpad{border:1.5px dashed #cbd5e1;border-radius:14px;background:#fcfdff;display:block;touch-action:none;cursor:crosshair;width:100%}
+.toggle-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #f1f5f9}
+.toggle-row:last-child{border-bottom:0}
+.toggle-row .tinfo{flex:1}
+.toggle-row b{font-size:13.5px;display:block}
+.toggle-row span{font-size:11.5px;color:var(--muted)}
+.sw{width:40px;height:22px;border-radius:99px;background:#cbd5e1;position:relative;cursor:pointer;flex-shrink:0;transition:background .18s;border:0}
+.sw::after{content:'';position:absolute;top:3px;inset-inline-start:3px;width:16px;height:16px;background:#fff;border-radius:99px;transition:transform .18s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.sw.on{background:var(--primary)}
+.sw.on::after{transform:translateX(-18px)}
+.sw.off-locked{opacity:.45;cursor:not-allowed}
+
+/* ===== Invoice ===== */
+.inv-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding-bottom:16px;border-bottom:1.5px solid var(--border);flex-wrap:wrap}
+.inv-head .co b{font-size:15px}
+.inv-head .co span{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+.inv-head .meta{text-align:left;font-size:11.5px;color:var(--muted);line-height:1.9}
+.inv-head .meta b{display:block;font-size:13px;color:var(--text)}
+.inv-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-top:18px;flex-wrap:wrap}
+.qrbox{text-align:center}
+.qrbox canvas{border:1px solid var(--border);border-radius:10px;padding:5px;background:#fff}
+.qrbox span{display:block;font-size:10px;color:var(--faint);margin-top:6px;max-width:160px;line-height:1.6}
+
+/* ===== Phone mock ===== */
+.phone-wrap{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+.phone{width:296px;height:600px;border:9px solid #0f172a;border-radius:40px;background:#f6f8fb;overflow:hidden;flex-shrink:0;box-shadow:0 24px 60px rgba(2,6,23,.18);position:relative}
+.phone .notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:96px;height:20px;background:#0f172a;border-radius:99px;z-index:3}
+.pscr{height:100%;overflow:auto;padding:46px 16px 20px}
+.pcard{background:#fff;border:1px solid var(--border);border-radius:15px;padding:14px;margin-bottom:11px}
+
+/* ===== Toast ===== */
+#toastRoot{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:9px;align-items:center}
+.toast{background:#0f172a;color:#fff;padding:11px 17px;border-radius:13px;font-size:13px;display:flex;gap:9px;align-items:center;box-shadow:0 14px 34px rgba(2,6,23,.3);animation:toastIn .25s ease}
+.toast.ok svg{color:#4ade80}
+@keyframes toastIn{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+
+/* ===== Dropdown menus ===== */
+.menu{position:absolute;top:46px;inset-inline-end:0;background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:var(--sh-lg);min-width:225px;padding:7px;z-index:90;display:none}
+.menu.open{display:block;animation:pop .15s ease}
+.menu .mi{display:flex;gap:10px;align-items:center;padding:9.5px 11px;border-radius:10px;font-size:13px;cursor:pointer;color:#334155}
+.menu .mi:hover{background:#f4f7fb}
+.menu .mi b{font-size:12.5px}
+.menu .mi span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.menu .mhead{font-size:11px;color:var(--faint);font-weight:700;padding:6px 11px 4px}
+
+/* ===== Inspection ===== */
+.insp-grid{display:grid;grid-template-columns:215px 1fr;gap:18px}
+.insp-tools{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.tooltag{padding:6px 12px;border-radius:99px;border:1.5px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;background:#fff;display:inline-flex;align-items:center;gap:6px}
+.tooltag .tdot2{width:8px;height:8px;border-radius:99px}
+.tooltag.on{border-color:var(--text);background:#0f172a;color:#fff}
+.marklist{max-height:150px;overflow:auto;margin-top:8px}
+.markrow{display:flex;align-items:center;gap:9px;font-size:12px;padding:6px 8px;border:1px solid #f1f5f9;border-radius:9px;margin-bottom:6px;background:#fbfcfe}
+.markrow .del{margin-inline-start:auto;cursor:pointer;color:var(--faint);display:grid}
+.markrow .del:hover{color:var(--red)}
+
+
+/* ===== Inspection page ===== */
+.igrid{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:stretch}
+.ipanel{border:1px solid var(--border);border-radius:14px;background:#fff;display:flex;flex-direction:column}
+.ipanel .ptitle{padding:13px 16px 0;font-size:13px;font-weight:700;color:#334155;text-align:center}
+.ipanel .pbody{flex:1;display:flex;align-items:center;justify-content:center;padding:18px}
+.tooltag.on2{border-color:var(--primary);box-shadow:0 0 0 3px #dbeafe;color:var(--primary)}
+.upbox{border:1.5px dashed #cbd5e1;border-radius:13px;padding:22px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);font-size:12.5px;cursor:pointer;transition:.15s;background:#fbfcfe}
+.upbox:hover{border-color:#93c5fd;color:var(--primary)}
+.phgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:10px;margin-top:12px}
+.phitem{position:relative;border-radius:11px;overflow:hidden;border:1px solid var(--border);aspect-ratio:1}
+.phitem img{width:100%;height:100%;object-fit:cover;display:block}
+.phitem .phx{position:absolute;top:5px;inset-inline-end:5px;width:20px;height:20px;border-radius:99px;background:rgba(15,23,42,.72);color:#fff;display:grid;place-items:center;cursor:pointer}
+@media (max-width:900px){.igrid{grid-template-columns:1fr}}
+
+/* ===== Charts ===== */
+.chart-ltr{direction:ltr}
+
+/* ===== KPI mini ===== */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.kpi .klbl{font-size:12px;color:var(--muted)}
+.kpi .kval{font-size:21px;font-weight:700;margin-top:6px}
+.kpi .ksub2{font-size:11px;color:var(--faint);margin-top:4px}
+
+/* ===== Print (invoice only) ===== */
+@media print{
+  body *{visibility:hidden}
+  .modal.invoice, .modal.invoice *{visibility:visible}
+  .ovl{position:absolute;inset:0;background:#fff;padding:0;backdrop-filter:none}
+  .modal.invoice{box-shadow:none;max-width:100%;max-height:none;border-radius:0}
+  .m-f,.m-x{display:none !important}
+}
+
+/* ===== Responsive ===== */
+@media (max-width:1100px){
+  .grid-stats{grid-template-columns:1fr 1fr}
+  .vgrid{grid-template-columns:1fr 1fr}
+  .grid-2,.track-grid{grid-template-columns:1fr}
+}
+/* ===== Mobile: drawer + scrim ===== */
+.scrim{display:none}
+@media (max-width:860px){
+  aside.sidebar{position:fixed;inset-inline-start:auto;inset-inline-end:0;top:0;height:100vh;height:100dvh;width:min(82vw,302px);
+    box-shadow:-18px 0 50px rgba(2,6,23,.18);transform:translateX(102%);visibility:hidden;
+    transition:transform .32s cubic-bezier(.32,.9,.35,1), visibility 0s .32s;
+    display:flex;overflow-y:auto;z-index:130;border-inline-end:none;border-inline-start:1px solid var(--border)}
+  .app.sideopen aside.sidebar{transform:translateX(0);visibility:visible;transition:transform .32s cubic-bezier(.32,.9,.35,1)}
+  .app.collapsed aside.sidebar{display:flex}
+  .scrim{display:block;position:fixed;inset:0;background:rgba(2,6,23,.42);backdrop-filter:blur(3px);
+    opacity:0;pointer-events:none;transition:opacity .28s;z-index:125}
+  .app.sideopen .scrim{opacity:1;pointer-events:auto}
+  .tb-search{max-width:none}
+  .kbd{display:none}
+  .nav-item{padding:11.5px 12px;font-size:14px}
+  .nav-item:hover{transform:none}
+  .side-foot{padding-bottom:max(14px, env(safe-area-inset-bottom))}
+  .content{padding-bottom:108px}
+  #toastRoot{bottom:calc(78px + env(safe-area-inset-bottom));width:calc(100% - 28px)}
+  .toast{width:100%;justify-content:flex-start}
+  .menu{max-width:calc(100vw - 26px)}
+  .btn{min-height:40px}
+  .stat:hover,.vcard:hover,.crow:hover{transform:none}
+}
+
+/* ===== Mobile: bottom navigation ===== */
+.bnav{display:none}
+@media (max-width:860px){
+  .bnav{position:fixed;bottom:0;left:0;right:0;z-index:95;display:grid;grid-template-columns:1fr 1fr 70px 1fr 1fr;
+    align-items:center;height:calc(62px + env(safe-area-inset-bottom));padding:0 6px env(safe-area-inset-bottom);
+    background:rgba(255,255,255,.93);backdrop-filter:blur(16px) saturate(1.5);border-top:1px solid var(--border)}
+  .bni{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:600;color:#64748b;
+    cursor:pointer;padding:7px 2px;border-radius:12px;transition:color .15s}
+  .bni .bic{display:grid;place-items:center;height:22px}
+  .bni.on{color:var(--primary)}
+  .bni:active{transform:scale(.94)}
+  .bfab{width:56px;height:56px;border-radius:99px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;
+    display:grid;place-items:center;margin:0 auto;transform:translateY(-16px);cursor:pointer;
+    box-shadow:0 8px 22px -6px rgba(37,99,235,.65), 0 0 0 5px rgba(241,245,249,.95);transition:transform .15s, filter .15s}
+  .bfab:active{transform:translateY(-16px) scale(.93)}
+  .bfab:hover{filter:brightness(1.07)}
+}
+
+/* ===== Mobile: compact layout ===== */
+@media (max-width:640px){
+  .grid-stats{grid-template-columns:1fr 1fr;gap:11px}
+  .stat{padding:13px}
+  .stat .val{font-size:19px}
+  .spark{width:100%;height:26px}
+  .vgrid,.kwrap,.kpis,.f2{grid-template-columns:1fr}
+  .content{padding:16px 13px 112px}
+  .hero h1{font-size:22px}
+  .topbar{padding-inline:10px;gap:7px}
+  .hide-sm{display:none}
+  .lang-btn{display:none}
+  .icon-btn{width:36px;height:36px}
+  .avatar{width:34px;height:34px}
+  .tb-title{min-width:0;flex-shrink:1}
+  #viewTitle{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;display:block}
+  .tb-search{min-width:0}
+  .tb-search input{min-width:0;width:100%}
+  .inp, select.inp, textarea.inp, .tb-search input{font-size:16px}
+  .tbl{min-width:580px}
+  .card-h{flex-wrap:wrap;gap:8px}
+  .page-h{flex-wrap:wrap;gap:10px}
+  #c3d{height:330px!important}
+  .pbody{padding:12px}
+  .m-f{flex-wrap:wrap}
+  .m-f .btn{flex:1 1 auto;justify-content:center}
+}
+
+/* ===== Overflow safety ===== */
+main, .content, .card, .card-b{min-width:0}
+.card-b:has(> .tbl){overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:640px){ .tbl{min-width:540px} }
+
+/* ===== Mobile: bottom-sheet modals ===== */
+@media (max-width:640px){
+  .ovl{align-items:flex-end;padding:0}
+  .modal{max-width:100%;border-radius:22px 22px 0 0;max-height:92vh;max-height:93dvh;animation:sheetUp .34s cubic-bezier(.3,1.15,.45,1)}
+  .modal::before{content:'';display:block;width:44px;height:5px;border-radius:99px;background:#e2e8f0;margin:10px auto 2px}
+  @keyframes sheetUp{from{transform:translateY(70px);opacity:.55}to{transform:none;opacity:1}}
+}
+
+/* ===== Polish v2 ===== */
+*:focus-visible{outline:2px solid #93c5fd;outline-offset:2px}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px;border:2px solid #f1f5f9}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+body{background:radial-gradient(1000px 420px at 80% -10%, rgba(59,130,246,.07), transparent 60%), var(--bg)}
+.card{box-shadow:0 1px 2px rgba(15,23,42,.04), 0 10px 28px -18px rgba(15,23,42,.14)}
+.stat{transition:transform .18s ease, box-shadow .18s ease}
+.stat:hover{transform:translateY(-3px);box-shadow:0 3px 6px rgba(15,23,42,.05), 0 18px 34px -18px rgba(37,99,235,.28)}
+.val,.kval{font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.spark{display:block;width:112px;height:30px;margin-top:10px;direction:ltr}
+.btn{transition:transform .14s ease, filter .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(135deg,#3b82f6,#2563eb);box-shadow:0 1px 2px rgba(37,99,235,.35), 0 8px 18px -8px rgba(37,99,235,.55)}
+.btn-primary:hover{filter:brightness(1.06)}
+.logo-sq{background:linear-gradient(135deg,#3b82f6,#1d4ed8);box-shadow:0 5px 16px -5px rgba(37,99,235,.65)}
+.nav-item{position:relative;transition:background .15s, color .15s, transform .15s}
+.nav-item:hover{transform:translateX(-2px)}
+.nav-item.active::before{content:'';position:absolute;inset-inline-start:-12px;top:7px;bottom:7px;width:3.5px;border-radius:99px;background:var(--primary)}
+.topbar{backdrop-filter:blur(14px) saturate(1.4)}
+.tb-search input{transition:box-shadow .18s, border-color .18s}
+.tb-search input:focus{border-color:#93c5fd;box-shadow:0 0 0 4px rgba(59,130,246,.12)}
+.kbd{position:absolute;inset-inline-end:11px;top:50%;transform:translateY(-50%);font-size:10.5px;color:#94a3b8;border:1px solid var(--border);border-bottom-width:2px;border-radius:6px;padding:1px 7px;background:#fff;pointer-events:none;line-height:1.5}
+.tb-search input:focus ~ .kbd{display:none}
+.avatar{background:linear-gradient(135deg,#334155,#0f172a);box-shadow:0 0 0 2px #fff, 0 0 0 4px #dbeafe}
+.toast{border-inline-start:3px solid #64748b}
+.toast.ok{border-inline-start-color:#4ade80}
+.toast.err{border-inline-start-color:#f87171}
+.toast.err svg{color:#f87171}
+.ovl{backdrop-filter:blur(7px) saturate(1.15)}
+.modal{animation:mpop .3s cubic-bezier(.34,1.45,.64,1)}
+@keyframes mpop{from{opacity:0;transform:scale(.94) translateY(12px)}to{opacity:1;transform:none}}
+.tbl tbody tr{transition:background .12s}
+.tbl tbody tr:hover{background:#f8fafc}
+.chip:hover{border-color:#bfdbfe;color:var(--primary)}
+.crow:hover{transform:translateY(-1px);box-shadow:0 8px 20px -12px rgba(37,99,235,.25)}
+.vcard{transition:transform .18s, box-shadow .18s, border-color .18s}
+.vcard:hover{transform:translateY(-3px);border-color:#bfdbfe;box-shadow:0 18px 34px -20px rgba(37,99,235,.3)}
+.selcard{transition:transform .15s, box-shadow .15s, border-color .15s, background .15s}
+.selcard:hover{transform:translateY(-1px)}
+#view.venter > *{animation:vup .45s cubic-bezier(.22,.9,.36,1) both}
+#view.venter > *:nth-child(2){animation-delay:.05s}
+#view.venter > *:nth-child(3){animation-delay:.1s}
+#view.venter > *:nth-child(4){animation-delay:.15s}
+#view.venter > *:nth-child(5){animation-delay:.2s}
+@keyframes vup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){
+  #view.venter > *, .modal, .lcline{animation:none!important}
+  .stat, .vcard, .crow, .nav-item{transition:none!important}
+}
+.lcline{stroke-dasharray:1400;stroke-dashoffset:1400;animation:lcdash 1.2s .15s ease-out forwards}
+@keyframes lcdash{to{stroke-dashoffset:0}}
+.lctip{position:absolute;display:none;flex-direction:column;align-items:center;gap:1px;background:#0f172a;color:#fff;border-radius:10px;padding:6px 11px;font-size:11.5px;transform:translate(-50%,-130%);pointer-events:none;white-space:nowrap;box-shadow:0 10px 24px rgba(2,6,23,.35);z-index:5}
+.lctip b{font-size:12.5px;font-variant-numeric:tabular-nums}
+.lctip span{color:#94a3b8;font-size:10.5px}
+.hero h1{letter-spacing:-.4px}
+
+/* ===== Features v3: scan / templates / qr ===== */
+.scan-drop{border:1.5px dashed #bfdbfe;border-radius:14px;padding:20px 14px;display:flex;flex-direction:column;align-items:center;gap:9px;background:linear-gradient(180deg,#f8fbff,#fff);text-align:center;cursor:pointer;transition:.16s}
+.scan-drop:hover{border-color:var(--primary);background:#f1f7ff}
+.scan-drop .si{width:46px;height:46px;border-radius:13px;background:#e0edff;color:var(--primary);display:grid;place-items:center}
+.scan-stage{position:relative;border-radius:14px;overflow:hidden;background:#0b1220;aspect-ratio:1.586;display:flex;align-items:center;justify-content:center}
+.scan-stage img{width:100%;height:100%;object-fit:cover;opacity:.92}
+.scan-laser{position:absolute;left:6%;right:6%;height:2.5px;background:linear-gradient(90deg,transparent,#38bdf8,transparent);box-shadow:0 0 12px 2px #38bdf8;animation:laser 1.5s ease-in-out infinite}
+@keyframes laser{0%{top:14%}50%{top:86%}100%{top:14%}}
+.scan-grid-ov{position:absolute;inset:0;background:linear-gradient(90deg,rgba(56,189,248,.08) 1px,transparent 1px) 0 0/26px 100%,linear-gradient(rgba(56,189,248,.08) 1px,transparent 1px) 0 0/100% 26px}
+.scan-tag{position:absolute;bottom:9px;inset-inline-start:9px;background:rgba(8,15,30,.78);color:#bae6fd;font-size:11px;padding:4px 10px;border-radius:99px;display:flex;align-items:center;gap:6px;backdrop-filter:blur(4px)}
+.scan-corner{position:absolute;width:22px;height:22px;border:2.5px solid #38bdf8}
+.sc-tl{top:8px;inset-inline-start:8px;border-inline-end:0;border-bottom:0}
+.sc-tr{top:8px;inset-inline-end:8px;border-inline-start:0;border-bottom:0}
+.sc-bl{bottom:8px;inset-inline-start:8px;border-inline-end:0;border-top:0}
+.sc-br{bottom:8px;inset-inline-end:8px;border-inline-start:0;border-top:0}
+.field-pop{animation:fpop .45s ease}
+@keyframes fpop{0%{background:#ecfdf5}100%{background:transparent}}
+.tpl-row{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 14px}
+.tpl{border:1px solid var(--border);background:#fff;border-radius:11px;padding:8px 12px;cursor:pointer;transition:.15s;text-align:start;min-width:104px}
+.tpl:hover{border-color:#bfdbfe;transform:translateY(-1px)}
+.tpl.on{border-color:var(--primary);background:#eff6ff;box-shadow:0 0 0 3px #dbeafe}
+.tpl b{font-size:12.5px;display:block}
+.tpl span{font-size:10.5px;color:var(--muted)}
+.qbtn{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:#fff;cursor:pointer;color:var(--primary);transition:.15s;flex-shrink:0}
+.qbtn:hover{border-color:#bfdbfe;background:#f1f7ff}
+.qr-stage{position:relative;border-radius:16px;overflow:hidden;background:#0b1220;aspect-ratio:1;max-width:260px;margin:4px auto 0;display:grid;place-items:center}
+.qr-frame{position:absolute;width:62%;height:62%;border-radius:18px;box-shadow:0 0 0 3px #38bdf8, 0 0 0 2000px rgba(8,14,28,.55)}
+.qr-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.qr-actions .btn{justify-content:flex-start}
+@media (max-width:640px){ .scan-stage{aspect-ratio:1.4}; .qr-actions{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="side-head">
+      <div class="logo-sq" id="logoIc"></div>
+      <div class="side-title"><b>كارليس</b><span>نظام إدارة تأجير السيارات</span></div>
+    </div>
+    <nav id="navRoot"></nav>
+    <div class="side-foot" onclick="langSoon()"><span id="langIc"></span> English</div>
+  </aside>
+  <div class="scrim" id="scrim" onclick="closeSide()"></div>
+
+  <!-- ===== Main ===== -->
+  <main>
+    <header class="topbar">
+      <div class="tb-title">
+        <span class="pn" id="panelIc" onclick="toggleSide()"></span>
+        <span id="viewTitle">لوحة التحكم</span>
+      </div>
+      <div class="tb-search">
+        <span class="sic" id="searchIc"></span>
+        <input id="searchInp" type="text" placeholder="بحث سريع..." autocomplete="off"
+               oninput="doSearch(this.value)" onfocus="doSearch(this.value)">
+        <div class="search-pop" id="searchPop"></div>
+      </div>
+      <div class="tb-actions">
+        <button class="lang-btn" onclick="langSoon()"><span id="langIc2"></span> EN</button>
+        <div style="position:relative">
+          <button class="icon-btn" onclick="toggleMenu('notifMenu',event)"><span id="bellIc"></span><span class="dot">3</span></button>
+          <div class="menu" id="notifMenu" style="min-width:300px"></div>
+        </div>
+        <div style="position:relative">
+          <button class="btn btn-primary" onclick="toggleMenu('addMenu',event)"><span id="plusIc"></span><span class="hide-sm">إضافة جديد</span></button>
+          <div class="menu" id="addMenu"></div>
+        </div>
+        <div class="avatar">أ</div>
+      </div>
+    </header>
+
+    <div class="content" id="view"></div>
+  </main>
+</div>
+
+<nav class="bnav" id="bnav">
+  <div class="bni" data-v="dashboard" onclick="nav('dashboard')"><span class="bic" data-i="grid"></span><span>الرئيسية</span></div>
+  <div class="bni" data-v="vehicles" onclick="nav('vehicles')"><span class="bic" data-i="car"></span><span>السيارات</span></div>
+  <div class="bfab" onclick="openWizard()"><span class="bic" data-i="plus"></span></div>
+  <div class="bni" data-v="contracts" onclick="nav('contracts')"><span class="bic" data-i="file"></span><span>العقود</span></div>
+  <div class="bni" data-v="__more" onclick="toggleSide()"><span class="bic" data-i="panel"></span><span>المزيد</span></div>
+</nav>
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<script>
+/* ================= ICONS ================= */
+const I = {
+  grid:'<rect width="7" height="9" x="3" y="3" rx="1.5"/><rect width="7" height="5" x="14" y="3" rx="1.5"/><rect width="7" height="9" x="14" y="12" rx="1.5"/><rect width="7" height="5" x="3" y="16" rx="1.5"/>',
+  car:'<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
+  search:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  file:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>',
+  pen:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  phone2:'<rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/>',
+  cal:'<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  building:'<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v8h4"/><path d="M18 9h2a2 2 0 0 1 2 2v11h-4"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>',
+  trend:'<path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+  receipt:'<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/>',
+  box:'<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/>',
+  chart:'<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+  gear:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+  x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  checkc:'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  alert:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  fuel:'<path d="M3 22h12"/><path d="M4 9h10"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0V9.83a2 2 0 0 0-.59-1.42L18 5"/>',
+  gauge:'<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
+  shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  clip:'<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
+  dollar:'<circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/>',
+  lang:'<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>',
+  chevL:'<path d="m15 18-6-6 6-6"/>',
+  arrowL:'<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
+  printer:'<path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14" rx="1"/>',
+  eye:'<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  panel:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/>',
+  trash:'<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/>',
+  qr:'<rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>',
+  smile:'<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01"/><path d="M15 9h.01"/>'
+};
+function ic(n,s=18,sw=2){return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${I[n]||''}</svg>`;}
+
+/* ================= DATA ================= */
+const state = {
+  vehicles:[
+    {id:'V1', ar:'تويوتا كامري',  en:'Toyota Camry',   year:2023, plate:{n:'4321',l:'أ ب د'}, status:'rented',      odo:42350, daily:240, fuel:70,  branch:'فرع العليا', renter:'C1', em:'🚗', insp:[{date:'2026-06-01',type:'استلام',marks:1,odo:41980,fuel:90}]},
+    {id:'V2', ar:'نيسان باترول',  en:'Nissan Patrol',  year:2024, plate:{n:'8812',l:'هـ ر س'}, status:'rented',     odo:18900, daily:350, fuel:55,  branch:'فرع العليا', renter:'C2', em:'🚙', insp:[]},
+    {id:'V3', ar:'لكزس ES',       en:'Lexus ES',       year:2023, plate:{n:'2275',l:'ق ط م'}, status:'rented',      odo:30120, daily:280, fuel:80,  branch:'فرع الملز',  renter:'C3', em:'🚘', insp:[]},
+    {id:'V4', ar:'هيونداي سوناتا',en:'Hyundai Sonata', year:2022, plate:{n:'5530',l:'ن ص ع'}, status:'available',   odo:61400, daily:150, fuel:90,  branch:'فرع الملز',  renter:null, em:'🚗', insp:[{date:'2026-06-09',type:'تسليم',marks:0,odo:61400,fuel:90}]},
+    {id:'V5', ar:'كيا سبورتاج',   en:'Kia Sportage',   year:2024, plate:{n:'1097',l:'و ل أ'}, status:'available',   odo:9800,  daily:200, fuel:100, branch:'فرع العليا', renter:null, em:'🚙', insp:[]},
+    {id:'V6', ar:'تويوتا هايلكس', en:'Toyota Hilux',   year:2022, plate:{n:'6644',l:'ب ت ث'}, status:'maintenance', odo:88200, daily:220, fuel:30,  branch:'فرع الملز',  renter:null, em:'🛻', insp:[]},
+  ],
+  customers:[
+    {id:'C1', name:'أحمد العتيبي',   phone:'0551234567', nid:'1098****21', nafath:true,  lic:'2027-03', rentals:3, spend:9400,  net:{r:14, late:0, dmg:0, viol:1, off:4}},
+    {id:'C2', name:'سارة علي',       phone:'0567891234', nid:'1124****88', nafath:true,  lic:'2028-01', rentals:2, spend:6100,  net:{r:6,  late:0, dmg:0, viol:0, off:2}},
+    {id:'C3', name:'محمد القحطاني',  phone:'0509876543', nid:'1077****35', nafath:true,  lic:'2026-11', rentals:5, spend:14750, net:{r:19, late:1, dmg:1, viol:2, off:5}},
+    {id:'C4', name:'خالد نور',       phone:'0532145678', nid:'2410****62', nafath:false, lic:'2027-07', rentals:1, spend:1200,  net:{r:7,  late:2, dmg:1, viol:4, off:3}},
+    {id:'C5', name:'عبدالله الشمري', phone:'0598765432', nid:'1056****90', nafath:true,  lic:'2029-02', rentals:0, spend:0,     net:{r:1,  late:0, dmg:0, viol:0, off:1}},
+    {id:'C6', name:'نورة السالم',    phone:'0541237890', nid:'1133****44', nafath:false, lic:'2028-05', rentals:0, spend:0,     net:{r:0,  late:0, dmg:0, viol:0, off:0}},
+  ],
+  contracts:[
+    {id:'CT-1001', cust:'C1', veh:'V1', from:'2026-06-01', days:15, daily:240, total:3600, status:'active',    signed:true,  sig:null, nafath:true},
+    {id:'CT-1002', cust:'C2', veh:'V2', from:'2026-06-03', days:10, daily:350, total:3500, status:'active',    signed:false, sig:null, nafath:true},
+    {id:'CT-1003', cust:'C3', veh:'V3', from:'2026-05-29', days:14, daily:280, total:3920, status:'active',    signed:true,  sig:null, nafath:true},
+    {id:'CT-1004', cust:'C4', veh:'V4', from:'2026-06-01', days:8,  daily:150, total:1200, status:'completed', signed:true,  sig:null, nafath:false},
+  ],
+  bookings:[
+    {id:'BK-2031', cust:'C5', veh:'V5', from:'2026-06-15', days:7, status:'مؤكد'},
+    {id:'BK-2032', cust:'C6', veh:'V4', from:'2026-06-18', days:3, status:'بانتظار العربون'},
+  ],
+  maintenance:[
+    {id:'M1', veh:'V6', title:'استبدال دبرياج وفحص ناقل الحركة', status:'قيد التنفيذ', cost:1850, due:'2026-06-13',   pr:'عالية'},
+    {id:'M2', veh:'V1', title:'تغيير زيت وفلتر',                 status:'مستحقة',     cost:280,  due:'بعد 500 كم',    pr:'متوسطة'},
+    {id:'M3', veh:'V2', title:'فحص دوري شامل',                   status:'مجدولة',     cost:450,  due:'2026-06-20',   pr:'منخفضة'},
+  ],
+  expenses:[
+    {id:'E1', date:'2026-06-02', cat:'صيانة',   desc:'قطع غيار هايلكس (دبرياج)', amount:1850},
+    {id:'E2', date:'2026-06-01', cat:'تأمين',   desc:'قسط تأمين الأسطول الشهري', amount:2400},
+    {id:'E3', date:'2026-06-05', cat:'وقود',    desc:'تعبئة وقود — سيارات الفرعين', amount:640},
+    {id:'E4', date:'2026-06-07', cat:'تشغيل',   desc:'غسيل وتنظيف داخلي', amount:350},
+    {id:'E5', date:'2026-06-08', cat:'رسوم',    desc:'تجديد استمارة كامري', amount:550},
+  ],
+  inventory:[
+    {name:'زيت محرك 5W-30', cat:'زيوت',     qty:12, min:5},
+    {name:'فلتر زيت تويوتا', cat:'فلاتر',    qty:8,  min:4},
+    {name:'إطار 18 بوصة',    cat:'إطارات',   qty:3,  min:4},
+    {name:'سائل تبريد',      cat:'سوائل',    qty:6,  min:3},
+    {name:'بطارية 70 أمبير', cat:'كهرباء',   qty:2,  min:3},
+    {name:'ممسحات زجاج',     cat:'إكسسوار',  qty:10, min:4},
+  ],
+  branches:[
+    {name:'فرع العليا', city:'الرياض — حي العليا، طريق التحلية', phone:'011 462 7781', mgr:'أحمد (المالك)'},
+    {name:'فرع الملز',  city:'الرياض — حي الملز، شارع الستين',   phone:'011 478 2210', mgr:'فهد المطيري'},
+  ],
+  payments:[
+    {date:'2026-06-01', ref:'CT-1001', cust:'C1', method:'مدى',   amount:3600},
+    {date:'2026-06-03', ref:'CT-1002', cust:'C2', method:'تحويل', amount:3500},
+    {date:'2026-05-29', ref:'CT-1003', cust:'C3', method:'مدى',   amount:3920},
+    {date:'2026-06-01', ref:'CT-1004', cust:'C4', method:'نقد',   amount:1200},
+    {date:'2026-06-04', ref:'خدمة توصيل', cust:'C2', method:'مدى', amount:240},
+    {date:'2026-06-06', ref:'رسوم سائق إضافي', cust:'C3', method:'تحويل', amount:3600},
+  ],
+  monthly:[{m:'Jan',v:29500},{m:'Feb',v:30800},{m:'Mar',v:33500},{m:'Apr',v:43200},{m:'May',v:48100}],
+  settings:{co:'كارليس لتأجير السيارات', cr:'1010 458 921', vatno:'311111111111113', vat:15, late:100, deposit:500,
+            integ:{nafath:true, zatca:true, gps:false, wa:false}},
+  notifications:[
+    {ic:'wrench', c:'#d97706', t:'صيانة مستحقة', s:'كامري 2023 — تغيير زيت بعد 500 كم'},
+    {ic:'clock',  c:'#2563eb', t:'عقد ينتهي قريبًا', s:'CT-1002 (سارة علي) ينتهي بعد يومين'},
+    {ic:'cal',    c:'#16a34a', t:'حجز بانتظار العربون', s:'BK-2032 — نورة السالم، سوناتا'},
+    {ic:'shield', c:'#dc2626', t:'تنبيه شبكة سمعة', s:'بلاغ جديد على خالد نور لدى مكتب آخر بالشبكة'},
+  ],
+  extraIncome:3840,
+  seq:1005, bseq:2033, mseq:4, eseq:6, cseq:7, vseq:7,
+};
+
+const VSTAT = {
+  rented:{t:'مؤجرة', c:'#f97316', soft:'#fff7ed', pill:'pill-orange'},
+  available:{t:'متاحة', c:'#16a34a', soft:'#ecfdf5', pill:'pill-green'},
+  maintenance:{t:'صيانة', c:'#d97706', soft:'#fffbeb', pill:'pill-amber'},
+};
+const CSTAT = {active:{t:'نشط',cls:'pill-blue'}, completed:{t:'مكتمل',cls:'pill-gray'}, cancelled:{t:'ملغي',cls:'pill-red'}};
+const EXP_COLORS = {'صيانة':'#f97316','تأمين':'#2563eb','وقود':'#d97706','تشغيل':'#14b8a6','رسوم':'#8b5cf6','أخرى':'#64748b'};
+
+/* ================= HELPERS ================= */
+const $ = s => document.querySelector(s);
+const fmt = n => Number(n).toLocaleString('en-US');
+const fmt2 = n => Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const sar = n => fmt(n)+' ر.س';
+const V = id => state.vehicles.find(v=>v.id===id);
+const C = id => state.customers.find(c=>c.id===id);
+const CT = id => state.contracts.find(c=>c.id===id);
+const vName = v => `${v.en} · ${v.year}`;
+const today = () => '2026-06-' + String(new Date().getDate()).padStart(2,'0');
+const revTotal = () => state.contracts.reduce((a,c)=>a+(c.status!=='cancelled'?c.total:0),0) + state.extraIncome;
+const expTotal = () => state.expenses.reduce((a,e)=>a+e.amount,0);
+const maintOpen = () => state.maintenance.filter(m=>m.status!=='منجزة').length;
+const bookOpen = () => state.bookings.filter(b=>b.status==='مؤكد'||b.status==='بانتظار العربون').length;
+const addDays = (d,n)=>{const x=new Date(d+'T00:00:00');x.setDate(x.getDate()+n);return x.toISOString().slice(0,10);};
+const plate = v => `<span class="plate"><b>${v.plate.n}</b><i>${v.plate.l}</i></span>`;
+const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function toast(msg, ok=true){
+  const t=document.createElement('div');
+  t.className='toast'+(ok?' ok':' err');
+  t.innerHTML=(ok?ic('checkc',17):ic('alert',17))+`<span>${msg}</span>`;
+  $('#toastRoot').appendChild(t);
+  setTimeout(()=>{t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(()=>t.remove(),320)},2900);
+}
+function langSoon(){ toast('الواجهة الإنجليزية على خارطة الطريق — البروتوتايب عربي أولًا', true); }
+function isMobile(){ return window.matchMedia('(max-width:860px)').matches; }
+function toggleSide(){
+  if(isMobile()) $('#app').classList.toggle('sideopen');
+  else $('#app').classList.toggle('collapsed');
+}
+function closeSide(){ $('#app').classList.remove('sideopen'); }
+function toggleMenu(id, ev){
+  ev && ev.stopPropagation();
+  document.querySelectorAll('.menu.open').forEach(m=>{ if(m.id!==id) m.classList.remove('open'); });
+  $('#'+id).classList.toggle('open');
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.menu') && !e.target.closest('.icon-btn') && !e.target.closest('.btn-primary'))
+    document.querySelectorAll('.menu.open').forEach(m=>m.classList.remove('open'));
+  if(!e.target.closest('.tb-search')) $('#searchPop').classList.remove('open');
+});
+
+/* ================= CHARTS (SVG) ================= */
+let LCD=null;
+function lineChart(vals, labels, w=560, h=250){
+  const pad={l:48,r:18,t:14,b:30}, max=60000;
+  const X=i=> pad.l + (w-pad.l-pad.r)*i/(vals.length-1);
+  const Y=v=> pad.t + (h-pad.t-pad.b)*(1-v/max);
+  LCD={vals, labels, Xs:vals.map((_,i)=>X(i)), Ys:vals.map(v=>Y(v)), w, h};
+  const ticks=[0,15000,30000,45000,60000];
+  let g='';
+  ticks.forEach(t=>{ g+=`<line x1="${pad.l}" y1="${Y(t)}" x2="${w-pad.r}" y2="${Y(t)}" stroke="#eef2f7"/>
+    <text x="${pad.l-8}" y="${Y(t)+4}" font-size="11" fill="#94a3b8" text-anchor="end">${t===0?'0':fmt(t)}</text>`; });
+  labels.forEach((m,i)=>{ g+=`<text x="${X(i)}" y="${h-8}" font-size="11.5" fill="#94a3b8" text-anchor="middle">${m}</text>`; });
+  const path = vals.map((v,i)=>`${i?'L':'M'}${X(i)},${Y(v)}`).join(' ');
+  const area = path + ` L${X(vals.length-1)},${h-pad.b} L${X(0)},${h-pad.b} Z`;
+  const dots = vals.map((v,i)=>{
+    const col = i===vals.length-1 ? '#14b8a6' : '#f97316';
+    return `<circle cx="${X(i)}" cy="${Y(v)}" r="5" fill="${col}" stroke="#fff" stroke-width="2.5"/>`;
+  }).join('');
+  return `<div class="chart-ltr lc-wrap" style="position:relative"><svg viewBox="0 0 ${w} ${h}" style="width:100%;display:block;overflow:visible">
+    <defs>
+      <linearGradient id="lg1" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#f97316"/><stop offset="60%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#14b8a6"/>
+      </linearGradient>
+      <linearGradient id="lgA" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#f59e0b" stop-opacity=".16"/><stop offset="100%" stop-color="#14b8a6" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    ${g}
+    <path d="${area}" fill="url(#lgA)"/>
+    <path class="lcline" d="${path}" fill="none" stroke="url(#lg1)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <line class="lcguide" y1="${pad.t}" y2="${h-pad.b}" stroke="#cbd5e1" stroke-dasharray="4 4" style="display:none"/>
+    ${dots}
+    <rect x="0" y="0" width="${w}" height="${h}" fill="transparent" onmousemove="lcMove(event)" onmouseleave="lcOut(event)"/>
+  </svg><div class="lctip"></div></div>`;
+}
+function lcMove(e){
+  if(!LCD) return;
+  const svg=e.currentTarget.ownerSVGElement, wrap=svg.parentElement, r=svg.getBoundingClientRect();
+  const vx=(e.clientX-r.left)*(LCD.w/r.width);
+  let bi=0, bd=1e9;
+  LCD.Xs.forEach((x,i)=>{ const d=Math.abs(x-vx); if(d<bd){bd=d;bi=i;} });
+  const gl=svg.querySelector('.lcguide');
+  gl.style.display='block'; gl.setAttribute('x1',LCD.Xs[bi]); gl.setAttribute('x2',LCD.Xs[bi]);
+  const tip=wrap.querySelector('.lctip');
+  tip.innerHTML=`<b>${fmt(LCD.vals[bi])} ر.س</b><span>${LCD.labels[bi]}</span>`;
+  tip.style.display='flex';
+  tip.style.left=(LCD.Xs[bi]*(r.width/LCD.w))+'px';
+  tip.style.top =(LCD.Ys[bi]*(r.height/LCD.h))+'px';
+}
+function lcOut(e){
+  const svg=e.currentTarget.ownerSVGElement, wrap=svg.parentElement;
+  svg.querySelector('.lcguide').style.display='none';
+  wrap.querySelector('.lctip').style.display='none';
+}
+function donut(segs, size=176, stroke=32, center=null){
+  const r=(size-stroke)/2 - 2, cx=size/2, cy=size/2, CIRC=2*Math.PI*r;
+  const total=segs.reduce((a,s)=>a+s.v,0)||1;
+  const gap=CIRC*0.022;
+  let off=0, out='';
+  segs.forEach(s=>{
+    const len=CIRC*s.v/total;
+    out+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.c}" stroke-width="${stroke}"
+      stroke-dasharray="${Math.max(len-gap,2)} ${CIRC-Math.max(len-gap,2)}" stroke-dashoffset="${-off}" stroke-linecap="butt"/>`;
+    off+=len;
+  });
+  const ct = center ? `
+    <text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="${Math.round(size*.15)}" font-weight="700" fill="#0f172a" style="font-variant-numeric:tabular-nums">${center.b}</text>
+    <text x="${cx}" y="${cy+Math.round(size*.105)}" text-anchor="middle" font-size="10.5" fill="#94a3b8">${center.s}</text>` : '';
+  return `<div class="chart-ltr" style="display:flex;justify-content:center"><svg viewBox="0 0 ${size} ${size}" style="width:${size}px;max-width:100%">
+    <g transform="rotate(-90 ${cx} ${cy})">${out}</g>${ct}</svg></div>`;
+}
+function barChart(vals, labels, w=560, h=230, color='#2563eb'){
+  const pad={l:48,r:14,t:14,b:30}, max=60000;
+  const iw=(w-pad.l-pad.r)/vals.length;
+  const Y=v=> pad.t + (h-pad.t-pad.b)*(1-v/max);
+  let g='';
+  [0,15000,30000,45000,60000].forEach(t=>{ g+=`<line x1="${pad.l}" y1="${Y(t)}" x2="${w-pad.r}" y2="${Y(t)}" stroke="#eef2f7"/>
+    <text x="${pad.l-8}" y="${Y(t)+4}" font-size="11" fill="#94a3b8" text-anchor="end">${t===0?'0':fmt(t)}</text>`; });
+  vals.forEach((v,i)=>{
+    const bw=Math.min(iw*0.5, 42), x=pad.l+iw*i+(iw-bw)/2, y=Y(v);
+    g+=`<rect x="${x}" y="${y}" width="${bw}" height="${h-pad.b-y}" rx="7" fill="${color}" opacity="${0.55+0.45*i/(vals.length-1)}"/>
+        <text x="${pad.l+iw*i+iw/2}" y="${h-8}" font-size="11.5" fill="#94a3b8" text-anchor="middle">${labels[i]}</text>`;
+  });
+  return `<div class="chart-ltr"><svg viewBox="0 0 ${w} ${h}" style="width:100%;display:block">${g}</svg></div>`;
+}
+function pseudoQR(canvas, seed, size){
+  if(size){ canvas.width=size; canvas.height=size; }
+  const n=25, px=canvas.width/n, ctx=canvas.getContext('2d');
+  let h=2166136261;
+  for(const ch of seed){ h^=ch.charCodeAt(0); h=Math.imul(h,16777619); }
+  const rnd=()=>{ h^=h<<13; h^=h>>>17; h^=h<<5; return ((h>>>0)/4294967295); };
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#0f172a';
+  const finder=(fx,fy)=>{
+    ctx.fillRect(fx*px,fy*px,7*px,7*px);
+    ctx.fillStyle='#fff'; ctx.fillRect((fx+1)*px,(fy+1)*px,5*px,5*px);
+    ctx.fillStyle='#0f172a'; ctx.fillRect((fx+2)*px,(fy+2)*px,3*px,3*px);
+  };
+  for(let r=0;r<n;r++) for(let c=0;c<n;c++){
+    const inF=(r<8&&c<8)||(r<8&&c>=n-8)||(r>=n-8&&c<8);
+    if(!inF && rnd()>0.52) ctx.fillRect(c*px,r*px,px,px);
+  }
+  finder(0,0); finder(n-7,0); finder(0,n-7);
+}
+
+/* ================= NAV & ROUTER ================= */
+const NAV = [
+  {sec:'الرئيسية', items:[{id:'dashboard', t:'لوحة التحكم', i:'grid'}]},
+  {sec:'الأسطول', items:[
+    {id:'vehicles',    t:'السيارات',          i:'car'},
+    {id:'vstatus',     t:'حالة الأسطول',      i:'gauge'},
+    {id:'inspection',  t:'حالة السيارة',      i:'clip'},
+    {id:'tracking',    t:'التتبع المباشر',    i:'pin'},
+    {id:'maintenance', t:'الصيانة والمتابعة', i:'wrench', badge:maintOpen},
+  ]},
+  {sec:'العمليات', items:[
+    {id:'contracts', t:'العقود',             i:'file'},
+    {id:'esign',     t:'التوقيع الإلكتروني', i:'pen'},
+    {id:'customers', t:'العملاء',            i:'users'},
+    {id:'reputation',t:'شبكة سمعة',          i:'shield'},
+    {id:'portal',    t:'بوابة العميل',       i:'phone2'},
+    {id:'bookings',  t:'الحجوزات',           i:'cal', badge:bookOpen},
+  ]},
+  {sec:'المؤسسة', items:[{id:'branches', t:'الفروع', i:'building'}]},
+  {sec:'المالية', items:[
+    {id:'revenue',   t:'الإيرادات', i:'trend'},
+    {id:'expenses',  t:'المصروفات', i:'receipt'},
+    {id:'inventory', t:'المخزون',   i:'box'},
+    {id:'reports',   t:'التقارير',  i:'chart'},
+  ]},
+  {sec:'الإعدادات', items:[{id:'settings', t:'الإعدادات', i:'gear'}]},
+];
+
+let cur = 'dashboard';
+let vehFilter = 'all';
+let mFilter = 'الكل';
+
+function renderNav(){
+  $('#navRoot').innerHTML = NAV.map(sec=>`
+    <div class="nav-sec">${sec.sec}</div>
+    ${sec.items.map(it=>{
+      const b = it.badge ? it.badge() : 0;
+      return `<div class="nav-item${cur===it.id?' active':''}" onclick="nav('${it.id}')">
+        ${ic(it.i,18)}<span>${it.t}</span>${b?`<span class="nbadge">${b}</span>`:''}
+      </div>`;
+    }).join('')}
+  `).join('');
+}
+function refreshBadges(){ renderNav(); $('#bellDot') && ($('#bellDot').textContent = state.notifications.length); }
+function nav(id){ cur=id; closeSide(); render(); }
+function render(){
+  renderNav();
+  $('#viewTitle').textContent = VIEWS[cur].t;
+  const vw=$('#view');
+  vw.classList.remove('venter'); void vw.offsetWidth;
+  vw.innerHTML = VIEWS[cur].r();
+  vw.classList.add('venter');
+  if(VIEWS[cur].after) VIEWS[cur].after();
+  document.querySelectorAll('.bni').forEach(b=> b.classList.toggle('on', b.dataset.v===cur));
+  vw.scrollTop = 0; window.scrollTo(0,0);
+}
+
+function spark(vals, color){
+  const w=112, h=30, mx=Math.max(...vals), mn=Math.min(...vals);
+  const X=i=> 3 + (w-6)*i/(vals.length-1);
+  const Y=v=> 4 + (h-9)*(1-(v-mn)/((mx-mn)||1));
+  const p=vals.map((v,i)=>`${i?'L':'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}">
+    <path d="${p} L${X(vals.length-1).toFixed(1)},${h-2} L3,${h-2} Z" fill="${color}" opacity=".09"/>
+    <path d="${p}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${X(vals.length-1).toFixed(1)}" cy="${Y(vals[vals.length-1]).toFixed(1)}" r="2.7" fill="${color}" stroke="#fff" stroke-width="1.4"/></svg>`;
+}
+function statCard(icon, bg, col, lbl, val, suf, trend, sp, spc){
+  return `<div class="stat">
+    <div class="top">
+      <div class="iconsq" style="background:${bg};color:${col}">${ic(icon,20)}</div>
+      ${trend?`<span class="trend">${trend}</span>`:''}
+    </div>
+    <div class="lbl">${lbl}</div>
+    <div class="val"><span class="cnt" data-v="${val}">${fmt(val)}</span>${suf}</div>
+    ${spark(sp, spc)}
+  </div>`;
+}
+function countUps(){
+  document.querySelectorAll('.cnt').forEach(el=>{
+    const target=+el.dataset.v||0, t0=performance.now(), D=800;
+    const step=t=>{
+      const k=Math.min(1,(t-t0)/D), e=1-Math.pow(1-k,3);
+      el.textContent=fmt(Math.round(target*e));
+      if(k<1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+function dashAfter(){ countUps(); }
+function arDate(){ return new Date().toLocaleDateString('ar-EG',{weekday:'long', day:'numeric', month:'long'}); }
+
+/* ================= VIEW: DASHBOARD ================= */
+function vDashboard(){
+  const rented = state.vehicles.filter(v=>v.status==='rented').length;
+  const avail  = state.vehicles.filter(v=>v.status==='available').length;
+  const maint  = state.vehicles.filter(v=>v.status==='maintenance').length;
+  const activeCt = state.contracts.filter(c=>c.status==='active').length;
+
+  const stats = `
+  <div class="grid-stats">
+    ${statCard('dollar','#eff6ff','#2563eb','إجمالي الإيرادات', revTotal(),' ر.س','+18%', state.monthly.map(m=>m.v),'#2563eb')}
+    ${statCard('file','#eff6ff','#2563eb','إيجارات نشطة', activeCt,'','+5%', [1,1,2,2,3,3],'#2563eb')}
+    ${statCard('car','#ecfdf5','#16a34a','سيارات متاحة', avail,'','', [3,2,4,3,2,2],'#16a34a')}
+    ${statCard('receipt','#fff7ed','#f97316','إجمالي المصروفات', expTotal(),' ر.س','', [820,1310,1080,1460,1120],'#f97316')}
+  </div>`;
+
+  const revCard = `
+  <div class="card">
+    <div class="card-h">الإيرادات الشهرية <span style="font-size:11.5px;color:var(--faint);font-weight:500">آخر 5 أشهر</span></div>
+    <div class="card-b">${lineChart(state.monthly.map(m=>m.v), state.monthly.map(m=>m.m))}</div>
+  </div>`;
+
+  const fleetCard = `
+  <div class="card">
+    <div class="card-h">حالة الأسطول</div>
+    <div class="card-b">
+      ${donut([{v:rented,c:VSTAT.rented.c},{v:avail,c:VSTAT.available.c},{v:maint,c:VSTAT.maintenance.c}],176,32,{b:state.vehicles.length,s:'سيارة بالأسطول'})}
+      <div style="margin-top:12px">
+        <div class="leg"><span class="ldot" style="background:${VSTAT.rented.c}"></span>مؤجرة<b>${rented}</b></div>
+        <div class="leg"><span class="ldot" style="background:${VSTAT.available.c}"></span>متاحة<b>${avail}</b></div>
+        <div class="leg"><span class="ldot" style="background:${VSTAT.maintenance.c}"></span>في الصيانة<b>${maint}</b></div>
+      </div>
+    </div>
+  </div>`;
+
+  const latest = state.contracts.slice(-4).reverse().map(ct=>{
+    const c=C(ct.cust), v=V(ct.veh), st=CSTAT[ct.status];
+    return `<div class="crow" onclick="openContract('${ct.id}')">
+      <div class="cavatar" style="background:#eff6ff;color:#2563eb;font-weight:700">${c.name[0]}</div>
+      <div class="cmeta"><b>${c.name}</b><span>${v.en} · ${ct.id}</span></div>
+      <div class="cend"><b>${sar(ct.total)}</b><span class="pill ${st.cls}">${st.t}</span></div>
+    </div>`;
+  }).join('');
+
+  const ctCard = `
+  <div class="card">
+    <div class="card-h">أحدث العقود
+      <span style="font-size:12px;color:var(--primary);cursor:pointer;font-weight:600" onclick="nav('contracts')">عرض الكل</span></div>
+    <div class="card-b" style="padding-top:4px">${latest}</div>
+  </div>`;
+
+  const qaCard = `
+  <div class="card">
+    <div class="card-h">إجراءات سريعة</div>
+    <div class="card-b"><div class="qa-grid">
+      <div class="qa" onclick="openWizard()"><div class="iconsq" style="background:#eff6ff;color:#2563eb">${ic('file',19)}</div>عقد جديد</div>
+      <div class="qa" onclick="openInspectPicker()"><div class="iconsq" style="background:#f0fdfa;color:#0d9488">${ic('clip',19)}</div>فحص سيارة</div>
+      <div class="qa" onclick="openAddExpense()"><div class="iconsq" style="background:#fff7ed;color:#f97316">${ic('receipt',19)}</div>إضافة مصروف</div>
+      <div class="qa" onclick="nav('tracking')"><div class="iconsq" style="background:#ecfdf5;color:#16a34a">${ic('pin',19)}</div>عرض الخريطة</div>
+    </div></div>
+  </div>`;
+
+  return `
+    <div class="hero"><h1>أهلاً بعودتك 👋</h1><p>نظرة عامة على نشاط أسطولك · ${arDate()}</p></div>
+    ${stats}
+    <div class="grid-2">${revCard}${fleetCard}</div>
+    <div class="grid-2">${ctCard}${qaCard}</div>`;
+}
+
+/* ================= VIEW: VEHICLES ================= */
+function vVehicles(){
+  const filters=[['all','الكل'],['rented','مؤجرة'],['available','متاحة'],['maintenance','صيانة']];
+  const list = state.vehicles.filter(v=> vehFilter==='all' || v.status===vehFilter);
+  const cards = list.map(v=>{
+    const st=VSTAT[v.status];
+    return `<div class="vcard">
+      <div class="vtop">
+        <div style="display:flex;gap:11px;align-items:center">
+          <div class="vimg" style="background:${st.soft}">${v.em}</div>
+          <div class="vname"><b>${v.ar}</b><span>${v.en} · ${v.year}</span></div>
+        </div>
+        <span class="pill ${st.pill}">${st.t}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        ${plate(v)}
+        <span class="vprice">${fmt(v.daily)} ر.س <small>/ يوم</small></span>
+      </div>
+      <div class="vspecs">
+        <span class="sp">${ic('gauge',14)} ${fmt(v.odo)} كم</span>
+        <span class="sp">${ic('fuel',14)} ${v.fuel}%</span>
+        <span class="sp">${ic('building',14)} ${v.branch}</span>
+      </div>
+      ${v.renter ? `<div class="vrenter">المستأجر الحالي: <b>${C(v.renter).name}</b></div>` : ''}
+      <div class="vbtns">
+        <button class="btn btn-soft btn-sm" onclick="openInspection('${v.id}')">${ic('clip',14)} فحص</button>
+        <button class="btn btn-ghost btn-sm" onclick="openVehicle('${v.id}')">${ic('eye',14)} عرض</button>
+        <button class="qbtn" style="width:34px;height:34px" title="رمز QR" onclick="vehicleQR('${v.id}')">${ic('qr',15)}</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="page-h">
+      <div class="chips">${filters.map(f=>`<button class="chip${vehFilter===f[0]?' on':''}" onclick="vehFilter='${f[0]}';render()">${f[1]}</button>`).join('')}</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-soft" onclick="qrScan()">${ic('qr',15)} مسح QR سيارة</button>
+        <button class="btn btn-primary" onclick="openAddVehicle()">${ic('plus',15)} إضافة سيارة</button>
+      </div>
+    </div>
+    <div class="vgrid" style="margin-top:0">${cards || '<div class="empty">لا توجد سيارات ضمن هذا الفلتر</div>'}</div>`;
+}
+
+/* ================= VIEW: FLEET STATUS (KANBAN) ================= */
+function vStatus(){
+  const col = (key)=>{
+    const st=VSTAT[key];
+    const items = state.vehicles.filter(v=>v.status===key);
+    return `<div class="kcol">
+      <h4><span class="ldot" style="width:9px;height:9px;border-radius:99px;background:${st.c};display:inline-block"></span>
+        ${st.t}<span class="kc">${items.length}</span></h4>
+      ${items.map(v=>`
+        <div class="kitem">
+          <b>${v.em} ${v.ar}</b>
+          <div class="ksub">${plate(v)} <span>${fmt(v.daily)} ر.س/يوم</span>${v.renter?`<span>· ${C(v.renter).name}</span>`:''}</div>
+          <div class="kact">
+            ${key==='available'   ? `<button class="btn btn-ghost btn-sm" onclick="moveV('${v.id}','maintenance')">${ic('wrench',13)} إلى الصيانة</button>` : ''}
+            ${key==='maintenance' ? `<button class="btn btn-soft btn-sm" onclick="moveV('${v.id}','available')">${ic('check',13)} جاهزة للتأجير</button>` : ''}
+            ${key==='rented'      ? `<span class="hint" style="margin:0">تُدار من شاشة العقود</span>` : ''}
+          </div>
+        </div>`).join('') || '<div class="empty" style="padding:18px">لا يوجد</div>'}
+    </div>`;
+  };
+  return `
+    <div class="banner">${ic('alert',17)} لوحة الحالة تعكس وضع الأسطول لحظيًا — السيارات المؤجرة تتغير حالتها تلقائيًا عند إنشاء العقود أو إنهائها.</div>
+    <div class="kwrap" style="margin-top:0">${col('rented')}${col('available')}${col('maintenance')}</div>`;
+}
+function moveV(id, status){
+  const v=V(id); v.status=status;
+  toast(status==='maintenance' ? `تم نقل ${v.ar} إلى الصيانة` : `${v.ar} أصبحت جاهزة للتأجير`);
+  render();
+}
+
+/* ================= VIEW: TRACKING ================= */
+function vTracking(){
+  const pins=[
+    {veh:'V1', x:300, y:148, c:'#f97316', sp:64, loc:'حي العليا — طريق التحلية', up:'دقيقتين'},
+    {veh:'V2', x:172, y:298, c:'#2563eb', sp:0,  loc:'حي الملز — متوقفة', up:'5 دقائق'},
+    {veh:'V3', x:468, y:246, c:'#14b8a6', sp:87, loc:'الطريق الدائري الشرقي', up:'الآن'},
+  ];
+  const map = `<svg class="map-svg" viewBox="0 0 640 420">
+    <rect width="640" height="420" fill="#eef4f8"/>
+    <circle cx="560" cy="80" r="52" fill="#dcfce7" opacity=".7"/>
+    <circle cx="90" cy="370" r="40" fill="#dcfce7" opacity=".6"/>
+    ${[110,210,310].map(y=>`<line x1="0" y1="${y}" x2="640" y2="${y}" stroke="#dde6ee" stroke-width="18"/><line x1="0" y1="${y}" x2="640" y2="${y}" stroke="#ffffff" stroke-width="13"/>`).join('')}
+    ${[160,320,480].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="420" stroke="#dde6ee" stroke-width="18"/><line x1="${x}" y1="0" x2="${x}" y2="420" stroke="#ffffff" stroke-width="13"/>`).join('')}
+    <line x1="0" y1="50" x2="640" y2="390" stroke="#fcd34d" stroke-width="11" opacity=".55"/>
+    <text x="332" y="96" font-size="12" fill="#94a3b8">العليا</text>
+    <text x="172" y="262" font-size="12" fill="#94a3b8">الملز</text>
+    <text x="492" y="330" font-size="12" fill="#94a3b8">السفارات</text>
+    ${pins.map(p=>{
+      const v=V(p.veh);
+      return `<g transform="translate(${p.x},${p.y})">
+        <circle class="pulse" r="15" fill="${p.c}" opacity=".45"/>
+        <circle r="7.5" fill="${p.c}" stroke="#fff" stroke-width="3"/>
+        <text x="0" y="-15" font-size="11.5" font-weight="700" fill="#334155" text-anchor="middle">${v.ar}</text>
+      </g>`;
+    }).join('')}
+  </svg>`;
+  const rows = pins.map(p=>{
+    const v=V(p.veh);
+    return `<div class="trow">
+      <span class="tdot" style="background:${p.c}"></span>
+      <div style="min-width:0;flex:1">
+        <b>${v.em} ${v.ar} <span style="font-weight:500;color:var(--faint);font-size:11px">· ${v.plate.n}</span></b>
+        <span>السائق: ${C(v.renter).name} · السرعة: ${p.sp} كم/س<br>${p.loc} · آخر تحديث قبل ${p.up}</span>
+      </div>
+      <span class="pill ${p.sp>0?'pill-green':'pill-gray'}">${p.sp>0?'تتحرك':'متوقفة'}</span>
+    </div>`;
+  }).join('');
+  return `
+    <div class="banner amberish">${ic('alert',17)} وضع تجريبي — المواقع والسرعات محاكاة للعرض. في النسخة الكاملة يتم الربط مع مزود تتبع GPS وتظهر بيانات الأسطول الفعلية لحظيًا.</div>
+    <div class="track-grid">
+      <div class="card"><div class="card-h">خريطة الأسطول — الرياض <span class="pill pill-green">${pins.length} سيارات نشطة</span></div>
+        <div class="card-b">${map}</div></div>
+      <div class="card"><div class="card-h">السيارات المؤجرة الآن</div>
+        <div class="card-b" style="padding-top:2px">${rows}</div></div>
+    </div>`;
+}
+
+/* ================= VIEW: MAINTENANCE ================= */
+function vMaintenance(){
+  const PR={'عالية':'#ef4444','متوسطة':'#f59e0b','منخفضة':'#16a34a'};
+  const STP={'مستحقة':'pill-red','قيد التنفيذ':'pill-blue','مجدولة':'pill-amber','منجزة':'pill-green'};
+  const tabs=['الكل','مستحقة','قيد التنفيذ','مجدولة','منجزة'];
+  const list = state.maintenance.filter(m=> mFilter==='الكل' || m.status===mFilter);
+  const items = list.map(m=>{
+    const v=V(m.veh);
+    return `<div class="mitem">
+      <div class="mbar" style="background:${PR[m.pr]}"></div>
+      <div class="mmain">
+        <b>${m.title}</b>
+        <div class="msub">
+          <span>${v.em} ${v.ar} · ${v.plate.n}</span>
+          <span>${ic('cal',13)} ${m.due}</span>
+          <span>${ic('dollar',13)} ${fmt(m.cost)} ر.س</span>
+          <span>الأولوية: ${m.pr}</span>
+        </div>
+      </div>
+      <div class="mside">
+        <span class="pill ${STP[m.status]}">${m.status}</span>
+        ${m.status!=='منجزة' ? `<button class="btn btn-soft btn-sm" onclick="completeMaint('${m.id}')">${ic('check',13)} إتمام</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="page-h">
+      <div class="chips">${tabs.map(t=>`<button class="chip${mFilter===t?' on':''}" onclick="mFilter='${t}';render()">${t}</button>`).join('')}</div>
+      <button class="btn btn-primary" onclick="openAddMaint()">${ic('plus',15)} جدولة صيانة</button>
+    </div>
+    ${items || '<div class="empty">لا توجد أعمال صيانة ضمن هذا الفلتر</div>'}`;
+}
+function completeMaint(id){
+  const m=state.maintenance.find(x=>x.id===id);
+  m.status='منجزة';
+  const v=V(m.veh);
+  if(v.status==='maintenance'){ v.status='available'; toast(`تم إنجاز الصيانة — ${v.ar} جاهزة للتأجير الآن`); }
+  else toast('تم إنجاز أمر الصيانة');
+  refreshBadges(); render();
+}
+
+/* ================= VIEW: CONTRACTS ================= */
+function vContracts(){
+  const rows = state.contracts.slice().reverse().map(ct=>{
+    const c=C(ct.cust), v=V(ct.veh), st=CSTAT[ct.status];
+    return `<tr class="clickable" onclick="openContract('${ct.id}')">
+      <td style="font-weight:700;direction:ltr;text-align:end">${ct.id}</td>
+      <td>${c.name}</td>
+      <td>${v.em} ${v.ar}</td>
+      <td style="font-size:12px;color:var(--muted);direction:ltr;text-align:end">${ct.from} ← ${addDays(ct.from,ct.days)}</td>
+      <td style="font-weight:700">${sar(ct.total)}</td>
+      <td>${ct.signed?'<span class="pill pill-green">موقّع</span>':'<span class="pill pill-amber">بانتظار التوقيع</span>'}</td>
+      <td><span class="pill ${st.cls}">${st.t}</span></td>
+    </tr>`;
+  }).join('');
+  return `
+    <div class="page-h">
+      <div class="hint" style="margin:0">المبالغ قبل ضريبة القيمة المضافة — الفاتورة تشمل 15% تلقائيًا</div>
+      <button class="btn btn-primary" onclick="openWizard()">${ic('plus',15)} عقد جديد</button>
+    </div>
+    <div class="card"><div class="card-b" style="padding-top:6px;overflow-x:auto">
+      <table class="tbl"><thead><tr>
+        <th>رقم العقد</th><th>العميل</th><th>السيارة</th><th>المدة</th><th>المبلغ</th><th>التوقيع</th><th>الحالة</th>
+      </tr></thead><tbody>${rows}</tbody></table>
+    </div></div>`;
+}
+
+/* ================= VIEW: E-SIGN ================= */
+function vEsign(){
+  const rows = state.contracts.filter(c=>c.status==='active').map(ct=>{
+    const c=C(ct.cust), v=V(ct.veh);
+    return `<div class="crow" style="cursor:default">
+      <div class="cavatar" style="background:${ct.signed?'#ecfdf5':'#fffbeb'};color:${ct.signed?'#16a34a':'#d97706'}">${ic('pen',18)}</div>
+      <div class="cmeta"><b>${ct.id} — ${c.name}</b><span>${v.en} · ${ct.from}</span></div>
+      <div class="cend" style="text-align:start">
+        ${ct.signed
+          ? `<span class="pill pill-green">موقّع إلكترونيًا ✓</span>`
+          : `<button class="btn btn-primary btn-sm" onclick="openSign('${ct.id}')">${ic('pen',13)} توقيع الآن</button>`}
+      </div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="banner">${ic('shield',17)} في النسخة الكاملة يصل العميل رابط توقيع عبر SMS أو واتساب، يوقّع من جواله مباشرة ويُحفظ التوقيع مع العقد بختم زمني.</div>
+    <div class="card"><div class="card-h">عقود نشطة — حالة التوقيع</div>
+      <div class="card-b" style="padding-top:2px">${rows || '<div class="empty">لا توجد عقود نشطة</div>'}</div></div>`;
+}
+
+/* ================= VIEW: CUSTOMERS ================= */
+function vCustomers(){
+  const rows = state.customers.map(c=>`
+    <tr>
+      <td><b>${c.name}</b></td>
+      <td style="direction:ltr;text-align:end;color:var(--muted)">${c.phone}</td>
+      <td style="direction:ltr;text-align:end;color:var(--muted)">${c.nid}</td>
+      <td>${c.nafath
+        ? `<span class="pill pill-green" style="display:inline-flex;align-items:center;gap:5px">${ic('shield',12)} موثّق عبر نفاذ</span>`
+        : `<span class="pill pill-gray">غير موثّق</span>`}</td>
+      <td>${(()=>{const sc=custScore(c),tt=tierOf(sc);return `<span class="pill" style="background:${tt.bg};color:${tt.c};cursor:pointer" onclick="openNetReport('${c.id}')">${sc===null?'لا سجل':sc+' · '+tt.t}</span>`;})()}</td>
+      <td style="direction:ltr;text-align:end;color:var(--muted)">${c.lic}</td>
+      <td>${c.rentals}</td>
+      <td style="font-weight:700">${sar(c.spend)}</td>
+    </tr>`).join('');
+  return `
+    <div class="page-h">
+      <div class="hint" style="margin:0">توثيق الهوية يتم عبر نفاذ عند أول عقد — لا حاجة لتصوير الهوية يدويًا</div>
+      <button class="btn btn-primary" onclick="openAddCustomer()">${ic('plus',15)} عميل جديد</button>
+    </div>
+    <div class="card"><div class="card-b" style="padding-top:6px;overflow-x:auto">
+      <table class="tbl"><thead><tr>
+        <th>الاسم</th><th>الجوال</th><th>الهوية</th><th>التوثيق</th><th>درجة السمعة</th><th>انتهاء الرخصة</th><th>الإيجارات</th><th>إجمالي الإنفاق</th>
+      </tr></thead><tbody>${rows}</tbody></table>
+    </div></div>`;
+}
+
+/* ================= VIEW: CUSTOMER PORTAL ================= */
+function vPortal(){
+  const ct = state.contracts.find(c=>c.id==='CT-1001');
+  const c=C(ct.cust), v=V(ct.veh);
+  const end = addDays(ct.from, ct.days);
+  const dl = Math.max(0, Math.ceil((new Date(end+'T00:00:00') - new Date())/86400000));
+  const prog = Math.min(100, Math.max(4, Math.round((ct.days-dl)/ct.days*100)));
+  return `
+  <div class="phone-wrap">
+    <div class="phone"><div class="notch"></div><div class="pscr">
+      <div style="font-size:12px;color:var(--muted)">مرحبًا 👋</div>
+      <div style="font-size:18px;font-weight:700;margin:2px 0 14px">${c.name}</div>
+      <div class="pcard">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <b style="font-size:13.5px">${v.em} ${v.ar}</b><span class="pill pill-blue">عقد نشط</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:5px;direction:ltr;text-align:end">${ct.from} ← ${end}</div>
+        <div style="height:7px;background:#eef2f7;border-radius:99px;margin-top:11px;overflow:hidden">
+          <div style="height:100%;width:${prog}%;background:var(--primary);border-radius:99px"></div></div>
+        <div style="font-size:11.5px;color:#334155;margin-top:7px">متبقي <b>${dl} أيام</b> على نهاية العقد</div>
+      </div>
+      <div class="pcard">
+        <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:var(--muted)">قيمة العقد</span><b>${sar(ct.total)}</b></div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:7px"><span style="color:var(--muted)">حالة الدفع</span><span class="pill pill-green">مدفوع</span></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:11px">
+        <button class="btn btn-soft btn-sm" style="flex:1;justify-content:center" onclick="toast('طلب التمديد يصل للمكتب فورًا — محاكاة')">${ic('cal',13)} طلب تمديد</button>
+        <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="toast('الدفع الإلكتروني عبر مدى/أبل باي في النسخة الكاملة')">${ic('dollar',13)} دفعة جديدة</button>
+      </div>
+      <div class="pcard" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="openInvoice('${ct.id}')">
+        <b style="font-size:12.5px">${ic('receipt',14)} فاتورتي الضريبية</b><span style="color:var(--faint)">${ic('chevL',15)}</span>
+      </div>
+      <div style="text-align:center;font-size:10px;color:var(--faint);margin-top:8px">مدعوم من كارليس</div>
+    </div></div>
+    <div class="card" style="flex:1;min-width:250px"><div class="card-h">بوابة العميل — بدون تطبيق</div>
+      <div class="card-b" style="font-size:13px;line-height:2;color:#334155">
+        يصل العميل رابط بوابته عبر SMS أو واتساب فور إنشاء العقد، ومنها يقدر:<br>
+        ${ic('check',14)} يتابع عقده والمدة المتبقية لحظيًا<br>
+        ${ic('check',14)} يطلب تمديد ويدفع إلكترونيًا (مدى / أبل باي)<br>
+        ${ic('check',14)} يوقّع العقد عن بُعد ويحمّل فاتورته الضريبية<br>
+        ${ic('check',14)} يتواصل مع المكتب بضغطة واحدة<br>
+        <span class="hint">جرّب الضغط على «فاتورتي الضريبية» في الجوال — تفتح الفاتورة الفعلية.</span>
+      </div></div>
+  </div>`;
+}
+
+/* ================= VIEW: BOOKINGS ================= */
+function vBookings(){
+  const BST={'مؤكد':'pill-blue','بانتظار العربون':'pill-amber','محوّل لعقد':'pill-green','ملغي':'pill-red'};
+  const rows = state.bookings.map(b=>{
+    const c=C(b.cust), v=V(b.veh);
+    const open = b.status==='مؤكد'||b.status==='بانتظار العربون';
+    return `<div class="crow" style="cursor:default">
+      <div class="cavatar" style="background:#eff6ff;color:#2563eb">${ic('cal',18)}</div>
+      <div class="cmeta"><b>${b.id} — ${c.name}</b><span>${v.en} · ${b.from} · ${b.days} أيام</span></div>
+      <div class="cend" style="text-align:start;display:flex;gap:8px;align-items:center">
+        <span class="pill ${BST[b.status]}">${b.status}</span>
+        ${open?`<button class="btn btn-primary btn-sm" onclick="convertBooking('${b.id}')">تحويل لعقد</button>
+                <button class="btn btn-danger-soft btn-sm" onclick="cancelBooking('${b.id}')">إلغاء</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="page-h">
+      <div class="hint" style="margin:0">تحويل الحجز لعقد ينشئ العقد والفاتورة تلقائيًا ويحجز السيارة</div>
+      <button class="btn btn-primary" onclick="openAddBooking()">${ic('plus',15)} حجز جديد</button>
+    </div>
+    <div class="card"><div class="card-b" style="padding-top:2px">${rows || '<div class="empty">لا توجد حجوزات</div>'}</div></div>`;
+}
+function convertBooking(id){
+  const b=state.bookings.find(x=>x.id===id);
+  const v=V(b.veh), c=C(b.cust);
+  if(v.status!=='available'){ toast(`${v.ar} غير متاحة حاليًا — عدّل الحجز أولًا`, false); return; }
+  const nid='CT-'+(state.seq++);
+  const total=b.days*v.daily;
+  state.contracts.push({id:nid, cust:b.cust, veh:b.veh, from:b.from, days:b.days, daily:v.daily, total, status:'active', signed:false, sig:null, nafath:c.nafath});
+  v.status='rented'; v.renter=b.cust;
+  c.rentals++; c.spend+=total;
+  state.payments.unshift({date:today(), ref:nid, cust:b.cust, method:'مدى', amount:total});
+  b.status='محوّل لعقد';
+  refreshBadges();
+  toast(`تم تحويل ${b.id} إلى العقد ${nid}`);
+  render();
+  setTimeout(()=>openInvoice(nid), 400);
+}
+function cancelBooking(id){
+  const b=state.bookings.find(x=>x.id===id);
+  b.status='ملغي'; refreshBadges(); toast('تم إلغاء الحجز'); render();
+}
+
+/* ================= VIEW: BRANCHES ================= */
+function vBranches(){
+  const cards = state.branches.map(b=>{
+    const vs = state.vehicles.filter(v=>v.branch===b.name);
+    const rented = vs.filter(v=>v.status==='rented').length;
+    return `<div class="card"><div class="card-b" style="padding-top:16px">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:13px">
+        <div class="iconsq" style="background:#eff6ff;color:#2563eb">${ic('building',20)}</div>
+        <div><b style="font-size:15px">${b.name}</b><div class="hint" style="margin-top:2px">${b.city}</div></div>
+      </div>
+      <div class="sumrow"><span>السيارات</span><b>${vs.length} (${rented} مؤجرة)</b></div>
+      <div class="sumrow"><span>المدير</span><b>${b.mgr}</b></div>
+      <div class="sumrow"><span>الهاتف</span><b style="direction:ltr">${b.phone}</b></div>
+    </div></div>`;
+  }).join('');
+  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" class="kpis">${cards}</div>
+    <div class="banner">${ic('building',17)} تقدر تضيف فروعًا غير محدودة في الخطط المدفوعة، مع صلاحيات مستخدمين لكل فرع وتقارير منفصلة.</div>`;
+}
+
+/* ================= VIEW: REVENUE ================= */
+function vRevenue(){
+  const ctTotal = state.contracts.reduce((a,c)=>a+(c.status!=='cancelled'?c.total:0),0);
+  const avg = Math.round(ctTotal/state.contracts.length);
+  const rows = state.payments.map(p=>{
+    const cust = C(p.cust);
+    return `<tr>
+      <td style="direction:ltr;text-align:end;color:var(--muted)">${p.date}</td>
+      <td style="font-weight:600">${p.ref}</td>
+      <td>${cust?cust.name:p.cust}</td>
+      <td><span class="pill pill-teal">${p.method}</span></td>
+      <td style="font-weight:700">${sar(p.amount)}</td>
+    </tr>`;
+  }).join('');
+  return `
+    <div class="kpis">
+      <div class="kpi"><div class="klbl">إجمالي الإيرادات</div><div class="kval">${sar(revTotal())}</div><div class="ksub2">عقود + خدمات إضافية</div></div>
+      <div class="kpi"><div class="klbl">متوسط قيمة العقد</div><div class="kval">${sar(avg)}</div><div class="ksub2">${state.contracts.length} عقود</div></div>
+      <div class="kpi"><div class="klbl">إيرادات إضافية</div><div class="kval">${sar(state.extraIncome)}</div><div class="ksub2">توصيل · سائق إضافي · رسوم</div></div>
+    </div>
+    <div class="card"><div class="card-h">الإيرادات الشهرية</div>
+      <div class="card-b">${lineChart(state.monthly.map(m=>m.v), state.monthly.map(m=>m.m))}</div></div>
+    <div class="card" style="margin-top:16px"><div class="card-h">سجل المدفوعات</div>
+      <div class="card-b" style="padding-top:6px;overflow-x:auto">
+      <table class="tbl"><thead><tr><th>التاريخ</th><th>المرجع</th><th>العميل</th><th>طريقة الدفع</th><th>المبلغ</th></tr></thead>
+      <tbody>${rows}</tbody></table></div></div>`;
+}
+
+/* ================= VIEW: EXPENSES ================= */
+function vExpenses(){
+  const byCat={};
+  state.expenses.forEach(e=>{ byCat[e.cat]=(byCat[e.cat]||0)+e.amount; });
+  const segs=Object.entries(byCat).map(([k,v])=>({v, c:EXP_COLORS[k]||'#64748b', k}));
+  const rows = state.expenses.slice().reverse().map(e=>`
+    <tr>
+      <td style="direction:ltr;text-align:end;color:var(--muted)">${e.date}</td>
+      <td><span class="pill" style="background:${(EXP_COLORS[e.cat]||'#64748b')}1a;color:${EXP_COLORS[e.cat]||'#64748b'}">${e.cat}</span></td>
+      <td>${e.desc}</td>
+      <td style="font-weight:700">${sar(e.amount)}</td>
+    </tr>`).join('');
+  return `
+    <div class="page-h">
+      <div class="hint" style="margin:0">المصروفات تنعكس مباشرة على لوحة التحكم والتقارير</div>
+      <button class="btn btn-primary" onclick="openAddExpense()">${ic('plus',15)} إضافة مصروف</button>
+    </div>
+    <div class="grid-2" style="margin-top:0">
+      <div class="card"><div class="card-h">سجل المصروفات <span class="pill pill-orange">${sar(expTotal())}</span></div>
+        <div class="card-b" style="padding-top:6px;overflow-x:auto">
+        <table class="tbl"><thead><tr><th>التاريخ</th><th>الفئة</th><th>الوصف</th><th>المبلغ</th></tr></thead>
+        <tbody>${rows}</tbody></table></div></div>
+      <div class="card"><div class="card-h">توزيع المصروفات</div><div class="card-b">
+        ${donut(segs,160,28,{b:fmt(expTotal()),s:'ر.س إجمالي'})}
+        <div style="margin-top:12px">${segs.map(s=>`<div class="leg"><span class="ldot" style="background:${s.c}"></span>${s.k}<b>${sar(s.v)}</b></div>`).join('')}</div>
+      </div></div>
+    </div>`;
+}
+
+/* ================= VIEW: INVENTORY ================= */
+function vInventory(){
+  const low = state.inventory.filter(i=>i.qty<i.min);
+  const rows = state.inventory.map(i=>`
+    <tr>
+      <td><b>${i.name}</b></td>
+      <td style="color:var(--muted)">${i.cat}</td>
+      <td>${i.qty}</td>
+      <td style="color:var(--muted)">${i.min}</td>
+      <td>${i.qty<i.min?'<span class="pill pill-red">منخفض — اطلب الآن</span>':'<span class="pill pill-green">متوفر</span>'}</td>
+    </tr>`).join('');
+  return `
+    ${low.length?`<div class="banner amberish">${ic('alert',17)} ${low.length===1?'صنف واحد':low.length+' أصناف'} تحت الحد الأدنى: ${low.map(i=>i.name).join('، ')} — تنبيه تلقائي قبل نفاد المخزون.</div>`:''}
+    <div class="card"><div class="card-h">مخزون قطع الغيار والمستلزمات</div>
+      <div class="card-b" style="padding-top:6px;overflow-x:auto">
+      <table class="tbl"><thead><tr><th>الصنف</th><th>الفئة</th><th>الكمية</th><th>الحد الأدنى</th><th>الحالة</th></tr></thead>
+      <tbody>${rows}</tbody></table></div></div>`;
+}
+
+/* ================= VIEW: REPORTS ================= */
+function vReports(){
+  const total=state.vehicles.length;
+  const rented=state.vehicles.filter(v=>v.status==='rented').length;
+  const occ=Math.round(rented/total*100);
+  const perV=Math.round(revTotal()/total);
+  const byCat={};
+  state.expenses.forEach(e=>{ byCat[e.cat]=(byCat[e.cat]||0)+e.amount; });
+  const segs=Object.entries(byCat).map(([k,v])=>({v, c:EXP_COLORS[k]||'#64748b', k}));
+  return `
+    <div class="page-h">
+      <div class="hint" style="margin:0">ملخص أداء الأسطول — ${today()}</div>
+      <button class="btn btn-ghost" onclick="toast('تصدير PDF/Excel متاح في النسخة الكاملة — هذا نموذج تجريبي')">${ic('printer',15)} تصدير PDF</button>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="klbl">نسبة الإشغال</div><div class="kval">${occ}%</div><div class="ksub2">${rented} من ${total} سيارات مؤجرة</div></div>
+      <div class="kpi"><div class="klbl">الإيراد لكل سيارة</div><div class="kval">${sar(perV)}</div><div class="ksub2">متوسط الفترة الحالية</div></div>
+      <div class="kpi"><div class="klbl">أعلى سيارة دخلًا</div><div class="kval">نيسان باترول</div><div class="ksub2">350 ر.س/يوم · إشغال مرتفع</div></div>
+    </div>
+    <div class="grid-2" style="margin-top:0">
+      <div class="card"><div class="card-h">مقارنة الإيرادات الشهرية</div>
+        <div class="card-b">${barChart(state.monthly.map(m=>m.v), state.monthly.map(m=>m.m))}</div></div>
+      <div class="card"><div class="card-h">المصروفات حسب الفئة</div><div class="card-b">
+        ${donut(segs,150,26,{b:fmt(expTotal()),s:'ر.س مصروفات'})}
+        <div style="margin-top:10px">${segs.map(s=>`<div class="leg"><span class="ldot" style="background:${s.c}"></span>${s.k}<b>${sar(s.v)}</b></div>`).join('')}</div>
+      </div></div>
+    </div>`;
+}
+
+/* ================= VIEW: SETTINGS ================= */
+function vSettings(){
+  const s=state.settings;
+  const tg=(key,title,sub,locked)=>`
+    <div class="toggle-row">
+      <div class="tinfo"><b>${title}</b><span>${sub}</span></div>
+      <button class="sw ${s.integ[key]?'on':''}" onclick="flipInteg('${key}')"></button>
+    </div>`;
+  return `
+    <div class="grid-2" style="margin-top:0;align-items:start">
+      <div>
+        <div class="card"><div class="card-h">معلومات المنشأة</div><div class="card-b">
+          <div class="frow"><label class="lbl2">اسم المنشأة</label><input class="inp" id="set_co" value="${esc(s.co)}"></div>
+          <div class="f2">
+            <div class="frow"><label class="lbl2">السجل التجاري</label><input class="inp" id="set_cr" value="${esc(s.cr)}" style="direction:ltr"></div>
+            <div class="frow"><label class="lbl2">الرقم الضريبي</label><input class="inp" id="set_vatno" value="${esc(s.vatno)}" style="direction:ltr"></div>
+          </div>
+          <div class="f2">
+            <div class="frow"><label class="lbl2">ضريبة القيمة المضافة %</label><input class="inp" id="set_vat" type="number" value="${s.vat}"></div>
+            <div class="frow"><label class="lbl2">التأمين المسترد (ر.س)</label><input class="inp" id="set_dep" type="number" value="${s.deposit}"></div>
+          </div>
+          <div class="frow"><label class="lbl2">غرامة التأخير اليومية (ر.س)</label><input class="inp" id="set_late" type="number" value="${s.late}"></div>
+          <button class="btn btn-primary" onclick="saveSettings()">${ic('check',15)} حفظ التعديلات</button>
+        </div></div>
+        <div class="card" style="margin-top:16px"><div class="card-h">المستخدمون</div><div class="card-b">
+          <div class="crow" style="cursor:default;margin-top:0">
+            <div class="avatar">أ</div>
+            <div class="cmeta"><b>أحمد — المالك</b><span>كل الصلاحيات</span></div>
+            <div class="cend"><span class="pill pill-blue">Admin</span></div>
+          </div>
+          <div class="hint">إدارة المستخدمين والأدوار (محاسب، موظف فرع، مشرف صيانة) متاحة في الخطط المدفوعة.</div>
+        </div></div>
+      </div>
+      <div class="card"><div class="card-h">التكاملات الحكومية والتقنية</div><div class="card-b" style="padding-top:2px">
+        ${tg('nafath','نفاذ — التحقق من الهوية','توثيق هوية المستأجر إلكترونيًا عند إنشاء العقد')}
+        ${tg('zatca','زاتكا — الفوترة الإلكترونية','فاتورة ضريبية مبسطة مع رمز QR (المرحلة الثانية)')}
+        ${tg('gps','تتبع GPS للأسطول','يتطلب اشتراكًا مع مزود أجهزة تتبع')}
+        ${tg('wa','إشعارات واتساب','تنبيهات العقود والحجوزات للعملاء تلقائيًا')}
+        <div class="hint">التكاملات هنا محاكاة للعرض — الربط الفعلي يتم في النسخة الكاملة عبر مفاتيح API.</div>
+      </div></div>
+    </div>`;
+}
+function flipInteg(key){
+  state.settings.integ[key]=!state.settings.integ[key];
+  toast(state.settings.integ[key]?'تم تفعيل التكامل (محاكاة)':'تم إيقاف التكامل (محاكاة)');
+  render();
+}
+function saveSettings(){
+  const s=state.settings;
+  s.co=$('#set_co').value; s.cr=$('#set_cr').value; s.vatno=$('#set_vatno').value;
+  s.vat=+$('#set_vat').value||15; s.deposit=+$('#set_dep').value||0; s.late=+$('#set_late').value||0;
+  toast('تم حفظ إعدادات المنشأة');
+}
+
+/* ================= VIEWS REGISTRY ================= */
+const VIEWS = {
+  dashboard:  {t:'لوحة التحكم', r:vDashboard, after:dashAfter},
+  vehicles:   {t:'السيارات',           r:vVehicles},
+  vstatus:    {t:'حالة الأسطول',       r:vStatus},
+  inspection: {t:'حالة السيارة',       r:vInspection, after:inspAfter},
+  tracking:   {t:'التتبع المباشر',     r:vTracking},
+  maintenance:{t:'الصيانة والمتابعة',  r:vMaintenance},
+  contracts:  {t:'العقود',             r:vContracts},
+  esign:      {t:'التوقيع الإلكتروني', r:vEsign},
+  customers:  {t:'العملاء',            r:vCustomers},
+  reputation: {t:'شبكة سمعة',         r:vReputation},
+  portal:     {t:'بوابة العميل',       r:vPortal},
+  bookings:   {t:'الحجوزات',           r:vBookings},
+  branches:   {t:'الفروع',             r:vBranches},
+  revenue:    {t:'الإيرادات',          r:vRevenue},
+  expenses:   {t:'المصروفات',          r:vExpenses},
+  inventory:  {t:'المخزون',            r:vInventory},
+  reports:    {t:'التقارير',           r:vReports},
+  settings:   {t:'الإعدادات',          r:vSettings},
+};
+
+/* ================= MODAL SYSTEM ================= */
+function openModal(html, cls=''){
+  $('#modalRoot').innerHTML = `<div class="ovl" id="ovl"><div class="modal ${cls}">${html}</div></div>`;
+  $('#ovl').addEventListener('click', e=>{ if(e.target.id==='ovl') closeModal(); });
+}
+function closeModal(){ $('#modalRoot').innerHTML=''; }
+const mHead = (t)=>`<div class="m-h"><span>${t}</span><button class="m-x" onclick="closeModal()">${ic('x',16)}</button></div>`;
+
+/* ================= SIGNATURE PAD ================= */
+function initSig(canvas, onFirst){
+  const ratio=2, w=canvas.clientWidth||460, h=160;
+  canvas.width=w*ratio; canvas.height=h*ratio; canvas.style.height=h+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(ratio,ratio);
+  ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#1e293b';
+  let draw=false, started=false;
+  const pos=e=>{const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top};};
+  canvas.addEventListener('pointerdown',e=>{
+    e.preventDefault(); draw=true; canvas.setPointerCapture(e.pointerId);
+    const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x+0.1,p.y+0.1); ctx.stroke();
+    if(!started){started=true; onFirst&&onFirst();}
+  });
+  canvas.addEventListener('pointermove',e=>{ if(!draw)return; const p=pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); });
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>canvas.addEventListener(ev,()=>draw=false));
+  return {
+    clear(){ ctx.clearRect(0,0,w,h); started=false; },
+    data(){ return canvas.toDataURL('image/png'); }
+  };
+}
+
+/* ================= CONTRACT DETAIL ================= */
+function openContract(id){
+  const ct=CT(id); if(!ct) return;
+  const c=C(ct.cust), v=V(ct.veh), st=CSTAT[ct.status], s=state.settings;
+  openModal(`
+    ${mHead(`عقد ${id} &nbsp;<span class="pill ${st.cls}">${st.t}</span>`)}
+    <div class="m-b">
+      <div class="f2">
+        <div>
+          <label class="lbl2">المستأجر</label>
+          <div class="selcard" style="cursor:default"><b>${c.name}</b>
+            <div class="ssub" style="direction:ltr;text-align:end">${c.phone} · ${c.nid}</div>
+            <div style="margin-top:7px">${ct.nafath?`<span class="pill pill-green" style="display:inline-flex;gap:5px;align-items:center">${ic('shield',12)} موثّق عبر نفاذ</span>`:'<span class="pill pill-gray">بدون توثيق نفاذ</span>'}</div>
+          </div>
+        </div>
+        <div>
+          <label class="lbl2">السيارة</label>
+          <div class="selcard" style="cursor:default"><b>${v.em} ${v.ar}</b>
+            <div class="ssub">${v.en} · ${v.year}</div>
+            <div style="margin-top:7px">${plate(v)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="sumrow"><span>الفترة</span><b style="direction:ltr">${ct.from} ← ${addDays(ct.from,ct.days)}</b></div>
+      <div class="sumrow"><span>التفاصيل</span><b>${ct.days} يوم × ${fmt(ct.daily)} ر.س</b></div>
+      <div class="sumrow"><span>التأمين المسترد</span><b>${fmt(s.deposit)} ر.س (يُعاد عند التسليم)</b></div>
+      <div class="sumrow tot"><span>الإجمالي قبل الضريبة</span><b>${sar(ct.total)}</b></div>
+      <div style="margin-top:16px">
+        <label class="lbl2">التوقيع الإلكتروني</label>
+        ${ct.sig
+          ? `<img src="${ct.sig}" alt="التوقيع" style="max-height:64px;border:1.5px dashed #cbd5e1;border-radius:11px;padding:6px;background:#fcfdff">`
+          : ct.signed
+            ? `<span class="pill pill-green">موقّع ✓</span>`
+            : `<span class="pill pill-amber">بانتظار التوقيع</span> <button class="btn btn-soft btn-sm" onclick="closeModal();openSign('${id}')">${ic('pen',13)} توقيع الآن</button>`}
+      </div>
+    </div>
+    <div class="m-f">
+      <button class="btn btn-soft" onclick="openInvoice('${id}')">${ic('receipt',15)} الفاتورة</button>
+      ${ct.status==='active'?`<button class="btn btn-soft" onclick="extendContract('${id}')">${ic('clock',15)} تمديد</button>`:''}
+      ${ct.status==='active'?`<button class="btn btn-danger-soft" onclick="endContract('${id}')">${ic('checkc',15)} إرجاع وإنهاء</button>`:''}
+      <button class="btn btn-ghost" style="margin-inline-start:auto" onclick="closeModal()">إغلاق</button>
+    </div>`);
+}
+function extendContract(id){
+  const ct=CT(id), v=V(ct.veh);
+  openModal(`${mHead('تمديد العقد '+id)}
+    <div class="m-b">
+      <div class="hint" style="margin-bottom:12px">الانتهاء الحالي: <b style="direction:ltr;display:inline-block">${addDays(ct.from,ct.days)}</b> · ${ct.days} يوم</div>
+      <label class="lbl2">أيام إضافية</label>
+      <div class="tpl-row" style="margin-top:6px">
+        ${[1,3,7,14].map(d=>`<button class="tpl" onclick="exSet(${d})" id="ex${d}"><b>+${d}</b><span>${fmt(d*ct.daily)} ر.س</span></button>`).join('')}
+      </div>
+      <input class="inp" id="exDays" type="number" min="1" value="3" data-rate="${ct.daily}" oninput="exLive()">
+      <div class="card" style="padding:4px 16px;box-shadow:none;border:1px solid var(--border);margin-top:13px">
+        <div class="sumrow"><span>قيمة التمديد</span><b id="exSub">${fmt2(3*ct.daily)} ر.س</b></div>
+        <div class="sumrow"><span>ضريبة 15٪</span><b id="exVat">${fmt2(3*ct.daily*.15)} ر.س</b></div>
+        <div class="sumrow tot"><span>الإجمالي</span><b id="exTot" style="color:var(--primary)">${fmt2(3*ct.daily*1.15)} ر.س</b></div>
+      </div>
+    </div>
+    <div class="m-f">
+      <button class="btn btn-primary" onclick="exApply('${id}')">${ic('check',15)} تأكيد التمديد</button>
+      <button class="btn btn-ghost" style="margin-inline-start:auto" onclick="openContract('${id}')">رجوع</button>
+    </div>`);
+}
+function exSet(d){ const i=$('#exDays'); i.value=d; exLive(); document.querySelectorAll('.tpl-row .tpl').forEach(t=>t.classList.remove('on')); const b=$('#ex'+d); if(b)b.classList.add('on'); }
+function exLive(){
+  const i=$('#exDays'); const d=Math.max(1,+i.value||1); const rate=+i.dataset.rate||0;
+  const sub=d*rate;
+  $('#exSub').textContent=fmt2(sub)+' ر.س';
+  $('#exVat').textContent=fmt2(sub*.15)+' ر.س';
+  $('#exTot').textContent=fmt2(sub*1.15)+' ر.س';
+}
+function exApply(id){
+  const ct=CT(id), add=Math.max(1,+$('#exDays').value||1);
+  ct.days += add;
+  ct.total += add*ct.daily;
+  C(ct.cust).spend += add*ct.daily;
+  state.payments.unshift({date:today(), ref:id, cust:ct.cust, method:'مدى', amount:add*ct.daily});
+  closeModal(); render();
+  toast(`تم تمديد ${id} بـ${add} أيام — الانتهاء الجديد ${addDays(ct.from,ct.days)}`);
+}
+function endContract(id){
+  const ct=CT(id), v=V(ct.veh);
+  ct.status='completed'; v.status='available'; v.renter=null;
+  closeModal(); refreshBadges();
+  toast(`تم إنهاء العقد ${id} — ${v.ar} متاحة الآن`);
+  render();
+}
+
+/* ================= E-SIGN MODAL ================= */
+let esAPI=null;
+function openSign(id){
+  const ct=CT(id), c=C(ct.cust);
+  openModal(`
+    ${mHead('توقيع العقد '+id)}
+    <div class="m-b">
+      <label class="lbl2">توقيع المستأجر — ${c.name}</label>
+      <canvas id="esSig" class="sigpad"></canvas>
+      <div class="hint">ارسم التوقيع بالماوس أو بالإصبع. في النسخة الكاملة يوقّع العميل من جواله عبر رابط آمن.</div>
+    </div>
+    <div class="m-f">
+      <button class="btn btn-primary" id="esSave" disabled onclick="saveSign('${id}')">${ic('check',15)} حفظ التوقيع</button>
+      <button class="btn btn-ghost" onclick="esAPI.clear();$('#esSave').disabled=true">مسح</button>
+      <button class="btn btn-ghost" style="margin-inline-start:auto" onclick="closeModal()">إلغاء</button>
+    </div>`);
+  esAPI=initSig($('#esSig'), ()=>{ $('#esSave').disabled=false; });
+}
+function saveSign(id){
+  const ct=CT(id);
+  ct.signed=true; ct.sig=esAPI.data();
+  closeModal(); toast(`تم توثيق توقيع ${C(ct.cust).name} على ${id}`);
+  render();
+}
+
+/* ================= INVOICE (ZATCA) ================= */
+function openInvoice(id){
+  const ct=CT(id); if(!ct) return;
+  const c=C(ct.cust), v=V(ct.veh), s=state.settings;
+  const sub=ct.total, vat=sub*(s.vat/100), tot=sub+vat;
+  openModal(`
+    ${mHead('فاتورة ضريبية مبسطة')}
+    <div class="m-b">
+      <div class="inv-head">
+        <div class="co"><b>${esc(s.co)}</b><span>س.ت: ${esc(s.cr)}</span><span>الرقم الضريبي: ${esc(s.vatno)}</span></div>
+        <div class="meta"><b>INV-${id.replace('CT-','')}</b>التاريخ: ${today()}<br>العقد: ${id}<br>العميل: ${c.name}</div>
+      </div>
+      <table class="tbl" style="margin-top:6px"><thead><tr><th>الوصف</th><th>الأيام</th><th>سعر اليوم</th><th>الإجمالي</th></tr></thead>
+      <tbody><tr>
+        <td>تأجير ${v.ar} — ${v.en} ${v.year} · لوحة ${v.plate.n}</td>
+        <td>${ct.days}</td><td>${fmt2(ct.daily)}</td><td>${fmt2(sub)}</td>
+      </tr></tbody></table>
+      <div style="margin-top:10px">
+        <div class="sumrow"><span>المجموع قبل الضريبة</span><b>${fmt2(sub)} ر.س</b></div>
+        <div class="sumrow"><span>ضريبة القيمة المضافة (${s.vat}%)</span><b>${fmt2(vat)} ر.س</b></div>
+        <div class="sumrow tot"><span>الإجمالي المستحق</span><b>${fmt2(tot)} ر.س</b></div>
+      </div>
+      <div class="inv-foot">
+        <div class="qrbox"><canvas id="invQR" width="96" height="96"></canvas>
+          <span>رمز QR وفق متطلبات الفوترة الإلكترونية — المرحلة الثانية (محاكاة)</span></div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.9">شكرًا لتعاملكم مع ${esc(s.co)}<br>التأمين المسترد ${fmt(s.deposit)} ر.س يُعاد عند تسليم السيارة</div>
+      </div>
+    </div>
+    <div class="m-f">
+      <button class="btn btn-primary" onclick="window.print()">${ic('printer',15)} طباعة</button>
+      <button class="btn btn-ghost" style="margin-inline-start:auto" onclick="closeModal()">إغلاق</button>
+    </div>`, 'invoice');
+  pseudoQR($('#invQR'), id+'|'+tot.toFixed(2));
+}
+
+/* ================= VEHICLE DETAIL ================= */
+function openVehicle(id){
+  const v=V(id), st=VSTAT[v.status];
+  const hist = v.insp.length
+    ? v.insp.slice().reverse().map(h=>`<div class="markrow"><span class="tdot2" style="width:8px;height:8px;border-radius:99px;background:var(--primary)"></span>
+        <span><b>${h.type}</b> · ${h.date} · ${h.marks} ملاحظات · ${fmt(h.odo)} كم · وقود ${h.fuel}%</span></div>`).join('')
+    : '<div class="empty" style="padding:14px">لا توجد فحوصات مسجلة بعد</div>';
+  openModal(`
+    ${mHead(`${v.em} ${v.ar} &nbsp;<span class="pill ${st.pill}">${st.t}</span>`)}
+    <div class="m-b">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        ${plate(v)}<span class="vprice">${fmt(v.daily)} ر.س <small>/ يوم</small></span>
+      </div>
+      <div class="sumrow"><span>الموديل</span><b>${v.en} · ${v.year}</b></div>
+      <div class="sumrow"><span>العداد</span><b>${fmt(v.odo)} كم</b></div>
+      <div class="sumrow"><span>الوقود</span><b>${v.fuel}%</b></div>
+      <div class="sumrow"><span>الفرع</span><b>${v.branch}</b></div>
+      ${v.renter?`<div class="sumrow"><span>المستأجر الحالي</span><b>${C(v.renter).name}</b></div>`:''}
+      <div style="margin-top:14px"><label class="lbl2">سجل الفحوصات</label><div class="marklist" style="max-height:130px">${hist}</div></div>
+    </div>
+    <div class="m-f">
+      <button class="btn btn-primary" onclick="closeModal();openInspection('${id}')">${ic('clip',15)} فحص جديد</button>
+      <button class="btn btn-soft" onclick="vehicleQR('${id}')">${ic('qr',15)} رمز QR</button>
+      <button class="btn btn-ghost" style="margin-inline-start:auto" onclick="closeModal()">إغلاق</button>
+    </div>`);
+}
+
+/* ---- Vehicle QR: show + simulate scanning ---- */
+function vehicleQR(id){
+  const v=V(id);
+  openModal(`${mHead('رمز QR — '+v.ar)}
+    <div class="m-b" style="text-align:center">
+      <div style="display:inline-block;padding:16px;border:1px solid var(--border);border-radius:18px;background:#fff">
+        <canvas id="vqr" width="180" height="180"></canvas>
+      </div>
+      <div style="margin-top:12px">${plate(v)}</div>
+      <div class="hint" style="margin-top:10px;line-height:1.9">اطبع هذا الرمز والصقه داخل السيارة. مسحه يفتح ملفها مباشرة — فحص، عقد، أو صيانة — دون بحث.<br>كل سيارة برمز فريد: <b style="color:var(--primary)">CARLEES-${v.id}-${v.plate.n}</b></div>
+    </div>
+    <div class="m-f">
+      <button class="btn btn-primary" onclick="window.print()">${ic('printer',15)} طباعة الملصق</button>
+      <button class="btn btn-soft" onclick="closeModal();qrScan('${id}')">${ic('qr',14)} تجربة المسح</button>
+      <button class="btn btn-ghost" style="margin-inline-start:auto" onclick="closeModal()">إغلاق</button>
+    </div>`);
+  pseudoQR($('#vqr'), 'CARLEES-'+v.id+'-'+v.plate.n, 180);
+}
+
+function qrNewContract(id){
+  closeModal(); openWizard(); W.veh=id;
+}
+/* ---- QR scanner (simulated): scans → opens vehicle action sheet ---- */
+function qrScan(forceId){
+  openModal(`${mHead('مسح رمز QR')}
+    <div class="m-b">
+      <div class="qr-stage"><div class="qr-frame"></div><div class="scan-laser" style="left:22%;right:22%"></div>
+        <div class="scan-tag" style="bottom:12px">${ic('qr',13)} وجّه الكاميرا نحو رمز السيارة…</div></div>
+      <div class="hint" style="text-align:center;margin-top:12px">محاكاة — في النسخة الكاملة تعمل كاميرا الجهاز فعليًا</div>
+    </div>
+    <div class="m-f"><button class="btn btn-ghost" style="margin-inline-start:auto" onclick="closeModal()">إلغاء</button></div>`);
+  setTimeout(()=>{
+    const pool=state.vehicles;
+    const v = forceId ? V(forceId) : pool[Math.floor(Math.random()*pool.length)];
+    qrSheet(v.id);
+  }, 1900);
+}
+function qrSheet(id){
+  const v=V(id), st=VSTAT[v.status];
+  const active = state.contracts.find(c=>c.veh===id && c.status==='active');
+  openModal(`${mHead('تم التعرّف على السيارة')}
+    <div class="m-b">
+      <div class="selcard" style="cursor:default">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><b>${v.em} ${v.ar} ${v.year}</b><div class="ssub">${v.branch} · ممشى ${fmt(v.odo)} كم</div></div>
+          <span class="pill ${st.pill}">${st.t}</span>
+        </div>
+        <div style="margin-top:9px">${plate(v)}</div>
+      </div>
+      <div class="hint" style="margin:13px 0 7px">ماذا تريد أن تفعل؟</div>
+      <div class="qr-actions">
+        <button class="btn btn-soft" onclick="closeModal();openInspection('${id}')">${ic('clip',16)} فحص السيارة</button>
+        ${v.status==='available'
+          ? `<button class="btn btn-soft" onclick="qrNewContract('${id}')">${ic('file',16)} عقد جديد بها</button>`
+          : active
+            ? `<button class="btn btn-soft" onclick="closeModal();openContract('${active.id}')">${ic('file',16)} العقد النشط</button>`
+            : `<button class="btn btn-soft" onclick="closeModal();openVehicle('${id}')">${ic('eye',16)} عرض الملف</button>`}
+        <button class="btn btn-soft" onclick="closeModal();openAddMaint();setTimeout(()=>{const sel=$('#amVe'); if(sel) sel.value='${id}';},60)">${ic('wrench',16)} تسجيل صيانة</button>
+        <button class="btn btn-soft" onclick="closeModal();openVehicle('${id}')">${ic('eye',16)} ملف السيارة</button>
+      </div>
+    </div>
+    <div class="m-f"><button class="btn btn-ghost" style="margin-inline-start:auto" onclick="closeModal()">إغلاق</button></div>`);
+}
+
+/* ================= INSPECTION PAGE (حالة السيارة) ================= */
+const TOOLS=[
+  ['خدش','#ef4444'],
+  ['طخة / مجعد','#f59e0b'],
+  ['شق / كسر','#2563eb'],
+  ['تلف طلاء','#8b5cf6'],
+  ['ملاحظة','#14b8a6'],
+];
+let IP={veh:'V1', type:'فحص قبل التسليم (استلام)', tool:'خدش', view:'2d', marks:[], notes:'', photos:[]};
+function openInspection(vid){ IP.veh=vid; IP.marks=[]; IP.photos=[]; IP.notes=''; nav('inspection'); }
+function openInspectPicker(){ nav('inspection'); }
+const tcol = t => (TOOLS.find(x=>x[0]===t)||TOOLS[0])[1];
+
+function inspTopSVG(){
+  return `<svg id="svgTop" viewBox="0 0 240 420" style="width:100%;max-width:250px;cursor:crosshair" onclick="inspClick(event,'top')">
+    <rect x="40" y="22" width="160" height="376" rx="56" fill="#fbfdff" stroke="#3b82f6" stroke-width="2.5"/>
+    <rect x="62" y="46" width="116" height="64" rx="10" fill="none" stroke="#93c5fd" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <rect x="62" y="122" width="55" height="100" rx="10" fill="none" stroke="#93c5fd" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <rect x="123" y="122" width="55" height="100" rx="10" fill="none" stroke="#93c5fd" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <rect x="62" y="234" width="116" height="76" rx="10" fill="none" stroke="#93c5fd" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <rect x="62" y="322" width="116" height="56" rx="10" fill="none" stroke="#93c5fd" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <rect x="18" y="74" width="18" height="50" rx="8" fill="#eef2f7"/><rect x="204" y="74" width="18" height="50" rx="8" fill="#eef2f7"/>
+    <rect x="18" y="292" width="18" height="50" rx="8" fill="#eef2f7"/><rect x="204" y="292" width="18" height="50" rx="8" fill="#eef2f7"/>
+    <ellipse cx="38" cy="150" rx="9" ry="6" fill="#e2e8f0"/><ellipse cx="202" cy="150" rx="9" ry="6" fill="#e2e8f0"/>
+    ${[['78','①'],['188','②'],['172 60','③']].length?'':''}
+    <text x="120" y="82" font-size="10" fill="#cbd5e1" text-anchor="middle">①</text>
+    <text x="92"  y="176" font-size="10" fill="#cbd5e1" text-anchor="middle">②</text>
+    <text x="150" y="176" font-size="10" fill="#cbd5e1" text-anchor="middle">③</text>
+    <text x="120" y="276" font-size="10" fill="#cbd5e1" text-anchor="middle">④</text>
+    <text x="120" y="354" font-size="10" fill="#cbd5e1" text-anchor="middle">⑤</text>
+    <g class="marksTop"></g>
+  </svg>`;
+}
+function inspFrontSVG(){
+  return `<svg id="svgFront" viewBox="0 0 420 260" style="width:100%;max-width:430px;cursor:crosshair" onclick="inspClick(event,'front')">
+    <path d="M60 210 L60 150 Q60 118 96 96 Q140 64 210 64 Q280 64 324 96 Q360 118 360 150 L360 210 Z"
+      fill="#fbfdff" stroke="#3b82f6" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M120 110 Q165 84 210 84 Q255 84 300 110 L284 128 L136 128 Z" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <line x1="210" y1="64" x2="210" y2="210" stroke="#93c5fd" stroke-width="1.4" stroke-dasharray="5 4"/>
+    <rect x="64" y="148" width="34" height="22" rx="5" fill="#f59e0b"/>
+    <rect x="322" y="148" width="34" height="22" rx="5" fill="#f59e0b"/>
+    <rect x="178" y="172" width="64" height="20" rx="6" fill="#eef2f7" stroke="#cbd5e1"/>
+    <line x1="186" y1="179" x2="234" y2="179" stroke="#cbd5e1" stroke-width="2"/>
+    <line x1="186" y1="185" x2="234" y2="185" stroke="#cbd5e1" stroke-width="2"/>
+    <ellipse cx="118" cy="212" rx="34" ry="13" fill="#334155"/>
+    <ellipse cx="302" cy="212" rx="34" ry="13" fill="#334155"/>
+    <text x="152" y="118" font-size="10" fill="#94a3b8" text-anchor="middle">①</text>
+    <text x="268" y="118" font-size="10" fill="#94a3b8" text-anchor="middle">②</text>
+    <g class="marksFront"></g>
+  </svg>`;
+}
+
+function vInspection(){
+  const toolChips = TOOLS.map(t=>`
+    <button class="tooltag${IP.tool===t[0]?' on2':''}" onclick="IP.tool='${t[0]}';render()">
+      <span class="tdot2" style="background:${t[1]}"></span>${t[0]}</button>`).join('');
+  const legend = TOOLS.map(t=>`<span class="sp" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#475569">
+    <span class="tdot2" style="width:8px;height:8px;border-radius:99px;background:${t[1]};display:inline-block"></span>${t[0]}</span>`).join('');
+  return `
+  <div class="hero"><h1>حالة السيارة قبل/بعد التسليم</h1><p>توثيق حالة السيارة وتحديد مواضع الأضرار بدقة</p></div>
+
+  <div class="f2" style="margin-top:18px;max-width:760px">
+    <div><label class="lbl2">اختر السيارة</label>
+      <select class="inp" onchange="IP.veh=this.value;IP.marks=[];render()">
+        ${state.vehicles.map(v=>`<option value="${v.id}" ${IP.veh===v.id?'selected':''}>${v.en} ${v.year} — ${v.plate.l} ${v.plate.n}</option>`).join('')}
+      </select></div>
+    <div><label class="lbl2">نوع الفحص</label>
+      <select class="inp" onchange="IP.type=this.value">
+        ${['فحص قبل التسليم (استلام)','فحص بعد التسليم (إرجاع)','فحص دوري'].map(t=>`<option ${IP.type===t?'selected':''}>${t}</option>`).join('')}
+      </select></div>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <div class="card-h" style="align-items:flex-start;flex-wrap:wrap">
+      <div><div>خريطة الأضرار التفاعلية</div>
+        <div style="font-size:11.5px;color:var(--faint);font-weight:500;margin-top:3px">انقر على جسم السيارة لإضافة ضرر.</div></div>
+      <div style="display:flex;gap:9px">
+        <button class="btn btn-ghost btn-sm" onclick="IP.marks=[];render()">${ic('trash',13)} مسح الكل</button>
+        <button class="btn btn-primary btn-sm" onclick="saveInspReport()">${ic('check',13)} حفظ التقرير</button>
+      </div>
+    </div>
+    <div class="card-b">
+      <div class="chips" style="margin-bottom:14px">
+        <button class="chip ${IP.view==='2d'?'on':''}" onclick="IP.view='2d';render()">${ic('grid',13)} عرض 2D</button>
+        <button class="chip ${IP.view==='3d'?'on':''}" onclick="IP.view='3d';render()">${ic('box',13)} عرض 3D</button>
+      </div>
+      <div style="font-size:12.5px;font-weight:700;color:#334155;margin-bottom:9px">نوع الضرر المراد إضافته:</div>
+      <div class="insp-tools" style="margin-bottom:18px">${toolChips}</div>
+
+      ${IP.view==='2d' ? `
+      <div class="igrid">
+        <div class="ipanel">
+          <div class="ptitle">المنظر الأمامي والخلفي</div>
+          <div class="pbody">${inspFrontSVG()}</div>
+        </div>
+        <div class="ipanel">
+          <div class="ptitle">المنظر العلوي (من أعلى)</div>
+          <div class="pbody">${inspTopSVG()}</div>
+        </div>
+      </div>` : `
+      <div class="ipanel">
+        <div class="ptitle">المجسم ثلاثي الأبعاد</div>
+        <div class="pbody" style="padding:10px"><div id="c3d" style="width:100%;height:430px;border-radius:12px;overflow:hidden"></div></div>
+        <div class="hint" style="text-align:center;padding:0 12px 13px;margin:0">اسحب للتدوير · عجلة الفأرة للتقريب · اضغط على جسم السيارة لتثبيت الضرر</div>
+      </div>`}
+      <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;justify-content:center">${legend}</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-h">قائمة الأضرار المسجَّلة (<span id="dmgCount">${IP.marks.length}</span>)</div>
+    <div class="card-b" id="dmgList"></div>
+  </div>
+
+  <div class="grid-2" style="margin-top:16px;grid-template-columns:1fr 1fr;align-items:start">
+    <div class="card"><div class="card-h">${ic('phone2',16)} صور السيارة <span id="phCount" class="pill pill-gray">${IP.photos.length}</span></div>
+      <div class="card-b">
+        <label class="upbox" for="phInp">${ic('plus',20)}<span>اضغط لإرفاق صور السيارة (قبل/بعد)</span></label>
+        <input type="file" id="phInp" accept="image/*" multiple style="display:none">
+        <div id="phGrid" class="phgrid"></div>
+      </div></div>
+    <div class="card"><div class="card-h">ملاحظات عامة</div>
+      <div class="card-b">
+        <textarea class="inp" rows="5" placeholder="أي ملاحظات إضافية حول حالة السيارة..." oninput="IP.notes=this.value">${esc(IP.notes)}</textarea>
+      </div></div>
+  </div>`;
+}
+
+function inspAfter(){
+  if(IP.view==='3d') init3D();
+  paintInspMarks();
+  paintPhotos();
+  const inp=$('#phInp');
+  inp && inp.addEventListener('change', e=>{
+    [...e.target.files].forEach(f=>{
+      const r=new FileReader();
+      r.onload=()=>{ IP.photos.push(r.result); paintPhotos(); };
+      r.readAsDataURL(f);
+    });
+    e.target.value='';
+  });
+}
+function inspClick(evt, view){
+  const svg = evt.currentTarget;
+  const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+  const p=pt.matrixTransform(svg.getScreenCTM().inverse());
+  IP.marks.push({view, x:p.x, y:p.y, tool:IP.tool});
+  paintInspMarks();
+}
+function paintInspMarks(){
+  const mk=(m,i)=>`<g transform="translate(${m.x},${m.y})">
+    <circle r="11" fill="${tcol(m.tool)}" stroke="#fff" stroke-width="2.5"/>
+    <text y="4" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">${i+1}</text></g>`;
+  const gT=document.querySelector('#svgTop .marksTop'), gF=document.querySelector('#svgFront .marksFront');
+  if(gT) gT.innerHTML = IP.marks.map((m,i)=> m.view==='top'?mk(m,i):'').join('');
+  if(gF) gF.innerHTML = IP.marks.map((m,i)=> m.view==='front'?mk(m,i):'').join('');
+  paint3DMarks();
+  $('#dmgCount') && ($('#dmgCount').textContent = IP.marks.length);
+  const list=$('#dmgList');
+  if(!list) return;
+  list.innerHTML = IP.marks.length
+    ? IP.marks.map((m,i)=>`<div class="markrow" style="padding:9px 12px">
+        <span class="tdot2" style="width:9px;height:9px;border-radius:99px;background:${tcol(m.tool)}"></span>
+        <span><b>${i+1}.</b> ${m.tool}</span>
+        <span style="font-size:11px;color:var(--faint)">· ${m.view==='top'?'المنظر العلوي':m.view==='front'?'المنظر الأمامي/الخلفي':'المجسم 3D'}</span>
+        <span class="del" onclick="IP.marks.splice(${i},1);paintInspMarks()">${ic('trash',14)}</span></div>`).join('')
+    : '<div class="empty" style="padding:22px">لا توجد أضرار مسجلة بعد.</div>';
+}
+function paintPhotos(){
+  $('#phCount') && ($('#phCount').textContent = IP.photos.length);
+  const g=$('#phGrid'); if(!g) return;
+  g.innerHTML = IP.photos.map((p,i)=>`
+    <div class="phitem"><img src="${p}" alt="صورة ${i+1}">
+      <span class="phx" onclick="IP.photos.splice(${i},1);paintPhotos()">${ic('x',12)}</span></div>`).join('');
+}
+
+/* ================= 3D VIEW (three.js) ================= */
+let T3=null;
+function init3D(){
+  const el=$('#c3d'); if(!el) return;
+  if(typeof THREE==='undefined'){
+    el.innerHTML='<div class="empty">تعذّر تحميل محرك العرض ثلاثي الأبعاد — تأكد من اتصال الإنترنت ثم أعد فتح الصفحة.</div>';
+    return;
+  }
+  const w=el.clientWidth||600, h=el.clientHeight||430;
+  const scene=new THREE.Scene(); scene.background=new THREE.Color(0xfbfdff);
+  const cam=new THREE.PerspectiveCamera(40, w/h, 0.1, 100);
+  const ren=new THREE.WebGLRenderer({antialias:true});
+  ren.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  ren.setSize(w,h);
+  el.innerHTML=''; el.appendChild(ren.domElement);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+  const dl=new THREE.DirectionalLight(0xffffff, 0.65); dl.position.set(4,7,3); scene.add(dl);
+
+  const ground=new THREE.Mesh(new THREE.CircleGeometry(4.6,48), new THREE.MeshBasicMaterial({color:0xeef2f7}));
+  ground.rotation.x=-Math.PI/2; scene.add(ground);
+
+  const car=new THREE.Group();
+  const bodyMat=new THREE.MeshStandardMaterial({color:0xffffff, roughness:.55, metalness:.08});
+  const glassMat=new THREE.MeshStandardMaterial({color:0xbfdbfe, roughness:.2, metalness:.1, transparent:true, opacity:.85});
+  const mirMat=new THREE.MeshStandardMaterial({color:0xf59e0b, roughness:.5});
+  const whMat=new THREE.MeshStandardMaterial({color:0x334155, roughness:.85});
+  const add=(geo,mat,x,y,z,rx=0,ry=0,rz=0,withEdge=false)=>{
+    const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.rotation.set(rx,ry,rz); car.add(m);
+    if(withEdge){
+      const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({color:0x3b82f6}));
+      e.position.copy(m.position); e.rotation.copy(m.rotation); car.add(e);
+    }
+    return m;
+  };
+  add(new THREE.BoxGeometry(1.9,.6,4.5),  bodyMat, 0,.62,0,    0,0,0, true);   // الهيكل
+  add(new THREE.BoxGeometry(1.7,.52,2.2), bodyMat, 0,1.16,-.15,0,0,0, true);   // المقصورة
+  add(new THREE.BoxGeometry(1.55,.5,.06), glassMat,0,1.14,1.02,-0.45,0,0);     // زجاج أمامي
+  add(new THREE.BoxGeometry(1.55,.46,.06),glassMat,0,1.14,-1.3, 0.5,0,0);      // زجاج خلفي
+  add(new THREE.BoxGeometry(.05,.38,1.85),glassMat, .86,1.18,-.15);            // نوافذ جانبية
+  add(new THREE.BoxGeometry(.05,.38,1.85),glassMat,-.86,1.18,-.15);
+  add(new THREE.BoxGeometry(.3,.12,.18),  mirMat,  1.05,1.0,.95);              // مرايا
+  add(new THREE.BoxGeometry(.3,.12,.18),  mirMat, -1.05,1.0,.95);
+  const wg=new THREE.CylinderGeometry(.38,.38,.28,24);
+  [[.95,1.45],[-.95,1.45],[.95,-1.45],[-.95,-1.45]].forEach(([x,z])=>add(wg,whMat,x,.38,z,0,0,Math.PI/2));
+  scene.add(car);
+
+  const markersG=new THREE.Group(); scene.add(markersG);
+  T3={scene, cam, ren, car, markersG, yaw:0.85, pitch:0.42, dist:7.4};
+  paint3DMarks();
+
+  const cv=ren.domElement;
+  cv.style.touchAction='none'; cv.style.cursor='grab'; cv.style.display='block';
+  let dragging=false, moved=0, lx=0, ly=0;
+  cv.addEventListener('pointerdown', e=>{ dragging=true; moved=0; lx=e.clientX; ly=e.clientY; cv.setPointerCapture(e.pointerId); cv.style.cursor='grabbing'; });
+  cv.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
+    moved += Math.abs(dx)+Math.abs(dy);
+    T3.yaw   -= dx*0.008;
+    T3.pitch  = Math.min(1.25, Math.max(0.08, T3.pitch + dy*0.006));
+  });
+  cv.addEventListener('pointerup', e=>{
+    dragging=false; cv.style.cursor='grab';
+    if(moved<6){
+      const r=cv.getBoundingClientRect();
+      const m=new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+      const rc=new THREE.Raycaster(); rc.setFromCamera(m, T3.cam);
+      const hits=rc.intersectObjects(T3.car.children.filter(o=>o.isMesh), false);
+      if(hits.length){
+        const p=hits[0].point;
+        IP.marks.push({view:'3d', p:{x:p.x, y:p.y, z:p.z}, tool:IP.tool});
+        paintInspMarks();
+      }
+    }
+  });
+  cv.addEventListener('wheel', e=>{ e.preventDefault(); T3.dist=Math.min(13, Math.max(3.5, T3.dist + e.deltaY*0.004)); }, {passive:false});
+
+  (function loop(){
+    if(!document.body.contains(cv)){ ren.dispose(); T3=null; return; }
+    cam.position.set(
+      Math.sin(T3.yaw)*Math.cos(T3.pitch)*T3.dist,
+      Math.sin(T3.pitch)*T3.dist + 0.5,
+      Math.cos(T3.yaw)*Math.cos(T3.pitch)*T3.dist
+    );
+    cam.lookAt(0, 0.6, 0);
+    ren.render(scene, cam);
+    requestAnimationFrame(loop);
+  })();
+}
+function markSprite(n, color){
+  const c=document.createElement('canvas'); c.width=c.height=96;
+  const x=c.getContext('2d');
+  x.beginPath(); x.arc(48,48,38,0,Math.PI*2); x.fillStyle=color; x.fill();
+  x.lineWidth=8; x.strokeStyle='#fff'; x.stroke();
+  x.fillStyle='#fff'; x.font='700 42px Arial'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(n,48,51);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c), depthTest:false}));
+  sp.scale.set(.34,.34,1);
+  return sp;
+}
+function paint3DMarks(){
+  if(!T3) return;
+  while(T3.markersG.children.length) T3.markersG.remove(T3.markersG.children[0]);
+  IP.marks.forEach((m,i)=>{
+    if(m.view!=='3d') return;
+    const sp=markSprite(String(i+1), tcol(m.tool));
+    sp.position.set(m.p.x, m.p.y, m.p.z);
+    T3.markersG.add(sp);
+  });
+}
+
+function saveInspReport(){
+  const v=V(IP.veh);
+  v.insp.push({date:today(), type:IP.type, marks:IP.marks.length, odo:v.odo, fuel:v.fuel, notes:IP.notes, photos:IP.photos.length});
+  toast(`تم حفظ تقرير «${IP.type}» لـ${v.ar} — ${IP.marks.length} أضرار و${IP.photos.length} صور`);
+  IP.marks=[]; IP.photos=[]; IP.notes='';
+  render();
+}
+
+/* ================= REPUTATION NETWORK (شبكة سمعة) ================= */
+const NET_HIST = {
+  C1:[{o:'مكتبك — كارليس', e:'إرجاع بالموعد وحالة ممتازة', d:'2026-05-28', k:'ok'},
+      {o:'مكتب تأجير — حي العليا', e:'14 إيجارًا مكتملًا دون ملاحظات', d:'2026-03-12', k:'ok'},
+      {o:'مكتب تأجير — جدة', e:'مخالفة سرعة سُدّدت خلال 48 ساعة', d:'2025-11-04', k:'warn'}],
+  C3:[{o:'مكتب تأجير — حي الملز', e:'تأخر بالإرجاع يومين', d:'2026-04-19', k:'warn'},
+      {o:'مكتبك — كارليس', e:'خدش بالصادم الخلفي — تم التعويض وديًا', d:'2026-02-07', k:'bad'},
+      {o:'مكتب تأجير — الدمام', e:'مخالفتان مروريتان سُدّدتا بعد متابعة', d:'2025-12-30', k:'warn'}],
+  C4:[{o:'مكتب تأجير — حي السليمانية', e:'امتناع عن سداد مخالفات (320 ر.س)', d:'2026-05-11', k:'bad'},
+      {o:'مكتب تأجير — الخبر', e:'تأخر بالإرجاع 4 أيام دون إشعار', d:'2026-03-02', k:'bad'},
+      {o:'مكتبك — كارليس', e:'ضرر بالمصد الأمامي — نزاع على التعويض', d:'2026-01-15', k:'bad'},
+      {o:'مكتب تأجير — حي النسيم', e:'4 مخالفات مرورية خلال عقد واحد', d:'2025-10-22', k:'warn'}],
+};
+function custScore(c){
+  if(!c || !c.net || (!c.net.r && !c.net.off)) return null;
+  let s = 70 + Math.min(c.net.r,12)*2 - c.net.late*8 - c.net.dmg*12 - c.net.viol*4;
+  if(c.net.r < 3) s = Math.min(s, 80);
+  return Math.max(12, Math.min(97, s));
+}
+function tierOf(s){
+  if(s===null) return {t:'لا سجل',          c:'#94a3b8', bg:'#f1f5f9'};
+  if(s>=85)    return {t:'ممتاز',           c:'#16a34a', bg:'#ecfdf5'};
+  if(s>=70)    return {t:'جيد',             c:'#2563eb', bg:'#eff6ff'};
+  if(s>=55)    return {t:'متوسط',           c:'#d97706', bg:'#fffbeb'};
+  return            {t:'مرتفع الخطورة',   c:'#dc2626', bg:'#fef2f2'};
+}
+function wzDeposit(){
+  const s=custScore(C(W.cust));
+  return s!==null && s<55 ? 1500 : s!==null && s<70 ? 1000 : state.settings.deposit;
+}
+function scoreRing(s, size=58){
+  const tier=tierOf(s), r=(size-9)/2, C2=2*Math.PI*r, k=(s===null?0:s)/100;
+  return `<svg viewBox="0 0 ${size} ${size}" style="width:${size}px;height:${size}px;flex-shrink:0">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#eef2f7" stroke-width="6.5"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${tier.c}" stroke-width="6.5" stroke-linecap="round"
+      stroke-dasharray="${(C2*k).toFixed(1)} ${C2.toFixed(1)}" transform="rotate(-90 ${size/2} ${size/2})"/>
+    <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="${Math.round(size*.3)}" font-weight="800" fill="${tier.c}">${s===null?'—':s}</text>
+  </svg>`;
+}
+function repChip(l, n){
+  return `<span class="pill" style="background:${n?'#fef2f2':'#f8fafc'};color:${n?'#dc2626':'#94a3b8'}">${l}: ${n}</span>`;
+}
+function vReputation(){
+  const cards = state.customers.map(c=>{
+    const s=custScore(c), t=tierOf(s), n=c.net||{r:0,late:0,dmg:0,viol:0,off:0};
+    return `<div class="card" style="padding:16px;display:flex;gap:14px;align-items:flex-start">
+      ${scoreRing(s,62)}
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap">
+          <b style="font-size:14.5px">${c.name}</b>
+          <span class="pill" style="background:${t.bg};color:${t.c}">${t.t}</span>
+        </div>
+        <div class="hint" style="margin:5px 0 9px">${n.off ? `${n.r} إيجار عبر ${n.off} مكاتب بالشبكة` : 'لا سجل بالشبكة بعد — مستأجر جديد'}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${repChip('تأخير إرجاع',n.late)}${repChip('أضرار',n.dmg)}${repChip('مخالفات',n.viol)}
+        </div>
+        <button class="btn btn-ghost" style="margin-top:11px;height:32px;font-size:12px" onclick="openNetReport('${c.id}')">${ic('eye',13)} التقرير الكامل</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `
+  <div class="hero"><h1>شبكة سمعة المستأجرين</h1><p>سجل ائتماني تأجيري مشترك بين المكاتب — «سِمة» لقطاع تأجير السيارات</p></div>
+  <div class="kpis" style="margin-top:16px">
+    <div class="kpi"><div class="klbl">مكاتب بالشبكة</div><div class="kval">23</div><div class="ksub2">بالرياض وجدة والدمام</div></div>
+    <div class="kpi"><div class="klbl">مستأجرون مسجّلون</div><div class="kval">4,812</div><div class="ksub2">سجل موحّد برقم الهوية</div></div>
+    <div class="kpi"><div class="klbl">بلاغات موثّقة</div><div class="kval">1,294</div><div class="ksub2">تأخير · أضرار · امتناع سداد</div></div>
+  </div>
+  <div class="card" style="margin-top:4px">
+    <div class="card-b" style="display:flex;gap:10px;flex-wrap:wrap">
+      <input class="inp" id="netQ" style="flex:1;min-width:220px" placeholder="استعلم برقم الهوية أو الجوال أو الاسم..." onkeydown="if(event.key==='Enter')netSearch()">
+      <button class="btn btn-primary" onclick="netSearch()">${ic('search',15)} استعلام بالشبكة</button>
+    </div>
+    <div id="netRes"></div>
+  </div>
+  <div class="grid-stats" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr));margin-top:4px">${cards}</div>
+  <div class="hint" style="margin-top:14px;line-height:1.95">بالنسخة الفعلية: الاستعلام يتم بعد موافقة المستأجر عبر نفاذ، وأسماء المكاتب الأخرى تظهر مموّهة التزامًا بنظام حماية البيانات الشخصية (PDPL)، وكل بلاغ يشترط عقدًا موثقًا وفاتورة مرتبطة حتى لا تُستغل الشبكة للتشهير. الأرقام والمكاتب أعلاه محاكاة للعرض.</div>`;
+}
+function netSearch(){
+  const q=($('#netQ').value||'').trim(), box=$('#netRes');
+  if(!q){ box.innerHTML=''; return; }
+  const dig=q.replace(/\D/g,'');
+  const c=state.customers.find(c=> c.name.includes(q) || (dig.length>=4 && c.phone.includes(dig)) || (dig.length>=4 && c.nid.startsWith(dig.slice(0,4))));
+  box.innerHTML = c ? `<div style="padding:0 18px 16px">
+      <div style="display:flex;gap:13px;align-items:center;border:1px solid var(--border);border-radius:14px;padding:13px 15px;background:#fbfcfe;flex-wrap:wrap">
+        ${scoreRing(custScore(c),56)}
+        <div style="flex:1;min-width:160px"><b>${c.name}</b><div class="hint" style="margin:2px 0 0">${c.nid} · ${(c.net&&c.net.r)||0} إيجار بالشبكة</div></div>
+        <button class="btn btn-primary" style="height:36px" onclick="openNetReport('${c.id}')">التقرير الكامل</button>
+      </div></div>`
+    : `<div style="padding:0 18px 16px"><div class="empty" style="padding:16px">لا سجل بهذا المعرّف — مستأجر جديد على الشبكة. يُنشأ سجله تلقائيًا مع أول عقد موثّق.</div></div>`;
+}
+function openNetReport(cid){
+  const c=C(cid), s=custScore(c), t=tierOf(s), n=c.net||{r:0,late:0,dmg:0,viol:0,off:0};
+  const KC={ok:'#16a34a', warn:'#d97706', bad:'#dc2626'};
+  const hist=(NET_HIST[cid]||[]);
+  const rows = hist.length ? hist.map(h=>`
+    <div style="display:flex;gap:10px;align-items:flex-start;border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-top:9px;background:#fff">
+      <span style="width:9px;height:9px;border-radius:99px;background:${KC[h.k]};flex-shrink:0;margin-top:5px"></span>
+      <div style="flex:1"><b style="font-size:13px">${h.e}</b>
+        <div class="hint" style="margin:2px 0 0">${h.o} · ${h.d}</div></div>
+    </div>`).join('') : '<div class="empty" style="padding:18px">سجل نظيف — لا بلاغات عبر الشبكة.</div>';
+  const rec = s===null ? 'مستأجر جديد: تأمين قياسي مع توثيق نفاذ وفحص استلام مفصّل بالصور.'
+    : s<55 ? 'تأمين مرتفع (1,500 ر.س) + سداد كامل القيمة مقدمًا + توثيق فحص الاستلام بالفيديو.'
+    : s<70 ? 'تأمين مرتفع (1,000 ر.س) مع تذكير بالإرجاع قبل الموعد بيوم.'
+    : 'معاملة قياسية — مؤهل لخصم الولاء والتمديد عن بُعد من بوابة العميل.';
+  openModal(`${mHead('تقرير الشبكة — '+c.name)}
+    <div class="m-b">
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        ${scoreRing(s,84)}
+        <div>
+          <span class="pill" style="background:${t.bg};color:${t.c};font-size:12px">${t.t}</span>
+          <div class="hint" style="margin-top:7px">${n.r} إيجار · ${n.off} مكاتب · آخر تحديث ${today()}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${repChip('تأخير',n.late)}${repChip('أضرار',n.dmg)}${repChip('مخالفات',n.viol)}</div>
+        </div>
+      </div>
+      <div style="font-size:12.5px;font-weight:700;margin:16px 0 2px">سجل البلاغات عبر الشبكة</div>
+      ${rows}
+      <div style="margin-top:14px;padding:13px 15px;border-radius:13px;border:1.5px solid ${t.c}44;background:${t.bg}">
+        <b style="font-size:12.5px;color:${t.c}">توصية النظام</b>
+        <div style="font-size:12.5px;margin-top:4px;color:#334155;line-height:1.8">${rec}</div>
+      </div>
+      <div class="hint" style="margin-top:11px">يُعرض التقرير بعد موافقة المستأجر عبر نفاذ — تفاصيل المكاتب الأخرى مموّهة التزامًا بـPDPL.</div>
+    </div>
+    <div class="m-f"><button class="btn btn-ghost" onclick="closeModal()">إغلاق</button></div>`);
+}
+function wzRiskNote(){
+  const c=C(W.cust); if(!c) return '';
+  const s=custScore(c);
+  if(s===null || s>=55) return '';
+  return `<div style="margin-top:10px;padding:12px 14px;border:1.5px solid #fecaca;background:#fef2f2;border-radius:13px;display:flex;gap:10px;align-items:center">
+    <span style="color:#dc2626">${ic('alert',18)}</span>
+    <div style="flex:1;font-size:12.5px"><b style="color:#dc2626">مستأجر مرتفع الخطورة عبر الشبكة (${s})</b>
+      <div class="hint" style="margin:2px 0 0">سيُرفع التأمين تلقائيًا — راجع تقرير الشبكة قبل المتابعة</div></div>
+    <button class="btn btn-ghost" style="height:32px;font-size:12px" onclick="openNetReport('${c.id}')">التقرير</button>
+  </div>`;
+}
+
+/* ================= CONTRACT WIZARD (5 STEPS) ================= */
+let W={}, wzSig=null;
+const PRICE_TPL=[
+  {id:'std',  t:'اليومي العادي', mult:1,    disc:0,   note:'بدون تعديل'},
+  {id:'wk',   t:'أسبوعي',        days:7,    disc:0.12,note:'خصم 12٪'},
+  {id:'we',   t:'نهاية الأسبوع', days:3,    disc:0.05,note:'3 أيام · خصم 5٪'},
+  {id:'mo',   t:'شهري',          days:30,   disc:0.22,note:'خصم 22٪'},
+];
+let wzTpl='std';
+
+function openWizard(){
+  W={step:1, cust:null, veh:null, from:today(), days:3, disc:0, nnum:10+Math.floor(Math.random()*90), nafathOk:false, nafathBusy:false, quickAdd:false}; wzTpl='std';
+  wzPaint();
+}
+const WZ_T={1:'اختيار العميل',2:'السيارة والمدة',3:'التسعير والملخص',4:'التحقق عبر نفاذ',5:'توقيع العقد'};
+function wzCalc(){
+  const v=V(W.veh); if(!v) return {base:0,sub:0,vat:0,tot:0};
+  const base=W.days*v.daily, sub=Math.max(0, base-(+W.disc||0));
+  return {base, sub, vat:sub*.15, tot:sub*1.15};
+}
+function wzPaint(){
+  let body='', canNext=false;
+
+  if(W.step===1){
+    canNext=!!W.cust;
+    body = `<div class="scan-drop" onclick="wzScanStart()">
+        <div class="si">${ic('clip',22)}</div>
+        <div><b style="font-size:13.5px">مسح الهوية أو رخصة القيادة</b>
+          <div class="hint" style="margin-top:2px">صوّر الوثيقة وستُعبّأ بيانات العميل تلقائيًا — أسرع طريقة لإضافة مستأجر جديد</div></div>
+      </div>
+      <div class="hint" style="text-align:center;margin:10px 0">— أو اختر من العملاء الحاليين —</div>` +
+      state.customers.map(c=>`
+      <div class="selcard ${W.cust===c.id?'on':''}" onclick="W.cust='${c.id}';wzPaint()">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><b>${c.name}</b><div class="ssub">${c.phone} · ${c.rentals} إيجارات سابقة</div></div>
+          <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
+            ${(()=>{const sc=custScore(c),tt=tierOf(sc);return `<span class="pill" style="background:${tt.bg};color:${tt.c}">${sc===null?'لا سجل':sc+' · '+tt.t}</span>`;})()}
+            ${c.nafath?`<span class="pill pill-green" style="display:inline-flex;gap:4px;align-items:center">${ic('shield',11)} نفاذ</span>`:'<span class="pill pill-gray">غير موثّق</span>'}
+          </div>
+        </div>
+      </div>`).join('')
+      + (W.quickAdd ? `
+      <div class="card" style="padding:14px;margin-top:6px;box-shadow:none;border:1.5px dashed #bfdbfe">
+        <div class="f2">
+          <div><label class="lbl2">اسم العميل</label><input class="inp" id="qaName" placeholder="مثال: فهد الدوسري"></div>
+          <div><label class="lbl2">رقم الجوال</label><input class="inp" id="qaPhone" placeholder="05xxxxxxxx"></div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:11px" onclick="wzQuickAdd()">${ic('check',14)} حفظ واختيار</button>
+      </div>`
+      : `<button class="btn btn-ghost" style="margin-top:4px" onclick="W.quickAdd=true;wzPaint()">${ic('plus',14)} عميل جديد سريع</button>`);
+    body += wzRiskNote();
+  }
+
+  if(W.step===2){
+    const avail=state.vehicles.filter(v=>v.status==='available');
+    canNext=!!W.veh && W.days>=1;
+    body = `
+      ${avail.length? avail.map(v=>`
+        <div class="selcard ${W.veh===v.id?'on':''}" onclick="W.veh='${v.id}';wzPaint()">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><b>${v.em} ${v.ar} ${v.year}</b><div class="ssub">${v.branch} · ممشى ${fmt(v.odo)} كم</div></div>
+            <div style="text-align:left"><b style="color:var(--primary)">${fmt(v.daily)}</b><div class="ssub">ر.س/يوم</div></div>
+          </div>
+        </div>`).join('') : '<div class="empty">لا سيارات متاحة حاليًا — أنهِ عقدًا أو أضف سيارة</div>'}
+      <label class="lbl2" style="margin-top:14px;display:block">قالب التسعير السريع</label>
+      <div class="tpl-row">
+        ${PRICE_TPL.map(t=>`<button class="tpl ${wzTpl===t.id?'on':''}" onclick="wzApplyTpl('${t.id}')"><b>${t.t}</b><span>${t.note}</span></button>`).join('')}
+      </div>
+      <div class="f2">
+        <div><label class="lbl2">تاريخ الاستلام</label><input class="inp" type="date" value="${W.from}" onchange="W.from=this.value"></div>
+        <div><label class="lbl2">عدد الأيام</label><input class="inp" type="number" min="1" value="${W.days}" oninput="W.days=Math.max(1,+this.value||1);wzTpl='std';wzLive()"></div>
+      </div>`;
+  }
+
+  if(W.step===3){
+    const v=V(W.veh), c=C(W.cust), k=wzCalc();
+    canNext=true;
+    body = `
+      <div class="card" style="padding:4px 16px;box-shadow:none;border:1px solid var(--border)">
+        <div class="sumrow"><span>العميل</span><b>${c.name}</b></div>
+        <div class="sumrow"><span>السيارة</span><b>${v.em} ${v.ar} ${v.year}</b></div>
+        <div class="sumrow"><span>المدة</span><b>${W.days} أيام × ${fmt(v.daily)} ر.س</b></div>
+        <div class="sumrow"><span>الإجمالي قبل الخصم</span><b id="wzBase">${fmt(k.base)} ر.س</b></div>
+        <div class="sumrow"><span>خصم</span><span style="width:120px"><input class="inp" style="height:34px;text-align:center" type="number" min="0" value="${W.disc}" oninput="W.disc=+this.value||0;wzLive()"></span></div>
+        <div class="sumrow"><span>الخاضع للضريبة</span><b id="wzSub">${fmt2(k.sub)} ر.س</b></div>
+        <div class="sumrow"><span>ضريبة القيمة المضافة (15٪)</span><b id="wzVat">${fmt2(k.vat)} ر.س</b></div>
+        <div class="sumrow tot"><span>الإجمالي شامل الضريبة</span><b id="wzTot" style="color:var(--primary)">${fmt2(k.tot)} ر.س</b></div>
+        ${(()=>{const sc=custScore(c), dep=wzDeposit(), up=dep>state.settings.deposit;
+          return `<div class="sumrow"><span>تأمين مسترد (يُحصّل عند الاستلام)</span><b style="${up?'color:#dc2626':''}">${fmt(dep)} ر.س</b></div>`
+            + (up?`<div class="hint" style="margin:0 0 8px">↑ رُفع التأمين تلقائيًا وفق درجة السمعة بالشبكة (${sc})</div>`:'');})()}
+      </div>`;
+  }
+
+  if(W.step===4){
+    const c=C(W.cust);
+    canNext=W.nafathOk;
+    body = `<div class="nafath-box">
+      <div style="color:var(--primary)">${ic('shield',34,1.8)}</div>
+      ${W.nafathOk ? `
+        <div style="color:var(--green);margin-top:8px">${ic('checkc',30,2)}</div>
+        <h3 style="margin:8px 0 4px">تم التحقق من هوية ${c.name}</h3>
+        <div class="hint">تمت الموافقة عبر تطبيق نفاذ — الهوية ${c.nid}</div>`
+      : W.nafathBusy ? `
+        <h3 style="margin:12px 0 2px">بانتظار موافقة العميل…</h3>
+        <div class="hint">اطلب من العميل اختيار الرقم التالي في تطبيق نفاذ</div>
+        <div class="nafath-num">${W.nnum}</div>
+        <div class="spinner"></div>`
+      : `
+        <h3 style="margin:12px 0 4px">التحقق من هوية العميل</h3>
+        <div class="hint">سيصل إشعار لتطبيق نفاذ على جوال ${c.name} (${c.phone})</div>
+        <button class="btn btn-primary" style="margin-top:14px" onclick="wzNafath()">${ic('shield',15)} إرسال طلب التحقق</button>`}
+    </div>
+    <div class="hint" style="margin-top:10px;text-align:center">محاكاة للعرض — الربط الفعلي يتم عبر منصة نفاذ الحكومية</div>`;
+  }
+
+  if(W.step===5){
+    const c=C(W.cust);
+    body = `
+      <label class="lbl2">توقيع المستأجر — ${c.name}</label>
+      <canvas id="wzSigC" class="sigpad"></canvas>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <span class="hint">ارسم التوقيع بالماوس أو بالإصبع</span>
+        <button class="btn btn-ghost" style="height:32px" onclick="wzSig.clear();$('#wzFin').disabled=true">مسح</button>
+      </div>`;
+  }
+
+  const foot = `
+    ${W.step>1?`<button class="btn btn-ghost" onclick="W.step--;wzPaint()">${ic('arrowL',15)} السابق</button>`:''}
+    ${W.step<5
+      ? `<button class="btn btn-primary" style="margin-inline-start:auto" ${canNext?'':'disabled'} onclick="W.step++;wzPaint()">التالي</button>`
+      : `<button class="btn btn-primary" style="margin-inline-start:auto" id="wzFin" disabled onclick="wzFinish()">${ic('check',15)} إنشاء العقد وتوثيقه</button>`}`;
+
+  openModal(`${mHead('عقد جديد — '+WZ_T[W.step])}<div class="m-b">${wzSteps()}${body}</div><div class="m-f">${foot}</div>`);
+  if(W.step===5) wzSig=initSig($('#wzSigC'), ()=>{ $('#wzFin').disabled=false; });
+}
+function wzSteps(){ return `<div class="steps">${[1,2,3,4,5].map(i=>`<div class="stp ${W.step>=i?'on':''}"></div>`).join('')}</div>`; }
+function wzLive(){
+  const k=wzCalc();
+  $('#wzBase') && ($('#wzBase').textContent=fmt(k.base)+' ر.س');
+  $('#wzSub')  && ($('#wzSub').textContent=fmt2(k.sub)+' ر.س');
+  $('#wzVat')  && ($('#wzVat').textContent=fmt2(k.vat)+' ر.س');
+  $('#wzTot')  && ($('#wzTot').textContent=fmt2(k.tot)+' ر.س');
+}
+function wzQuickAdd(){
+  const n=$('#qaName').value.trim(), p=$('#qaPhone').value.trim();
+  if(!n||!p){ toast('أدخل اسم العميل ورقم جواله', false); return; }
+  const id='C'+(state.cseq++);
+  state.customers.push({id, name:n, phone:p, nid:'10'+Math.floor(10+Math.random()*89)+'****'+Math.floor(10+Math.random()*89), nafath:false, lic:'سارية', rentals:0, spend:0});
+  W.cust=id; W.quickAdd=false; wzPaint();
+}
+function wzApplyTpl(id){
+  wzTpl=id;
+  const t=PRICE_TPL.find(x=>x.id===id), v=V(W.veh);
+  if(t.days) W.days=t.days;
+  if(v) W.disc = Math.round(W.days*v.daily*(t.disc||0));
+  else W.disc = 0;
+  wzPaint();
+}
+
+/* ---- ID / license camera scan (simulated OCR) ---- */
+const SCAN_NAMES=['عبدالعزيز المطيري','ريم الحربي','فيصل الغامدي','لمياء العنزي','تركي الدوسري','هند الشهراني'];
+function wzScanStart(){
+  const inp=document.createElement('input');
+  inp.type='file'; inp.accept='image/*'; inp.capture='environment';
+  inp.onchange=e=>{ const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=()=>wzScanStage(r.result); r.readAsDataURL(f); };
+  inp.click();
+}
+function wzScanStage(dataURL){
+  openModal(`${mHead('مسح وثيقة العميل')}
+    <div class="m-b">
+      <div class="scan-stage">
+        <img src="${dataURL}" alt="">
+        <div class="scan-grid-ov"></div>
+        <div class="scan-corner sc-tl"></div><div class="scan-corner sc-tr"></div>
+        <div class="scan-corner sc-bl"></div><div class="scan-corner sc-br"></div>
+        <div class="scan-laser"></div>
+        <div class="scan-tag" id="scanTag">${ic('eye',13)} جارٍ قراءة الوثيقة…</div>
+      </div>
+      <div id="scanResult"></div>
+    </div>
+    <div class="m-f" id="scanFoot"></div>`);
+  setTimeout(()=>{
+    const name=SCAN_NAMES[Math.floor(Math.random()*SCAN_NAMES.length)];
+    const nid='10'+Math.floor(10+Math.random()*89)+Math.floor(100000+Math.random()*899999);
+    const phone='05'+Math.floor(10000000+Math.random()*89999999);
+    const lic='14'+(45+Math.floor(Math.random()*4))+'-'+String(1+Math.floor(Math.random()*12)).padStart(2,'0');
+    W._scan={name, nid, phone, lic};
+    const tag=$('#scanTag'); if(tag) tag.innerHTML=`${ic('checkc',13)} تمت القراءة بنجاح`;
+    const box=$('#scanResult');
+    if(box) box.innerHTML=`
+      <div class="hint" style="margin:13px 0 4px">البيانات المستخرجة — راجعها وعدّل إن لزم:</div>
+      <div class="f2">
+        <div class="field-pop"><label class="lbl2">الاسم</label><input class="inp" id="scName" value="${name}"></div>
+        <div class="field-pop"><label class="lbl2">رقم الهوية</label><input class="inp" id="scNid" value="${nid}" style="direction:ltr;text-align:end"></div>
+      </div>
+      <div class="f2">
+        <div class="field-pop"><label class="lbl2">رقم الجوال</label><input class="inp" id="scPhone" value="${phone}" style="direction:ltr;text-align:end"></div>
+        <div class="field-pop"><label class="lbl2">انتهاء الرخصة</label><input class="inp" id="scLic" value="${lic}" style="direction:ltr;text-align:end"></div>
+      </div>
+      <div class="hint" style="margin-top:10px">محاكاة لاستخراج البيانات (OCR) — في النسخة الكاملة تُقرأ الحقول فعليًا من صورة الوثيقة.</div>`;
+    const foot=$('#scanFoot');
+    if(foot) foot.innerHTML=`<button class="btn btn-primary" onclick="wzScanConfirm()">${ic('check',15)} اعتماد وإضافة العميل</button>
+      <button class="btn btn-ghost" onclick="wzScanStart()">${ic('clip',14)} إعادة المسح</button>
+      <button class="btn btn-ghost" style="margin-inline-start:auto" onclick="wzPaint()">إلغاء</button>`;
+  }, 2000);
+}
+function wzScanConfirm(){
+  const n=$('#scName').value.trim(), nid=$('#scNid').value.trim(), p=$('#scPhone').value.trim(), lic=$('#scLic').value.trim();
+  if(!n||!p){ toast('الاسم ورقم الجوال مطلوبان', false); return; }
+  const mask = nid.length>=6 ? nid.slice(0,4)+'****'+nid.slice(-2) : nid;
+  const id='C'+(state.cseq++);
+  state.customers.push({id, name:n, phone:p, nid:mask, nafath:false, lic:lic||'سارية', rentals:0, spend:0, net:{r:0,late:0,dmg:0,viol:0,off:0}});
+  W.cust=id; W._scan=null;
+  wzPaint();
+  toast(`تمت إضافة ${n} من مسح الوثيقة`);
+}
+function wzNafath(){
+  W.nafathBusy=true; wzPaint();
+  setTimeout(()=>{
+    W.nafathBusy=false; W.nafathOk=true;
+    C(W.cust).nafath=true;
+    wzPaint(); toast('تم التحقق من الهوية عبر نفاذ ✓');
+  }, 1800);
+}
+function wzFinish(){
+  const v=V(W.veh), c=C(W.cust), k=wzCalc();
+  const id='CT-'+(state.seq++);
+  state.contracts.push({id, cust:W.cust, veh:W.veh, from:W.from, days:W.days, daily:v.daily, total:k.sub, status:'active', signed:true, sig:wzSig.data(), nafath:true});
+  v.status='rented'; v.renter=W.cust;
+  c.rentals++; c.spend+=k.sub;
+  state.payments.unshift({date:today(), ref:id, cust:W.cust, method:'مدى', amount:k.sub});
+  closeModal(); refreshBadges(); render();
+  toast(`تم إنشاء العقد ${id} وتوثيقه بنجاح`);
+  setTimeout(()=>openInvoice(id), 450);
+}
+
+/* ================= QUICK-ADD MODALS ================= */
+function openAddVehicle(){
+  openModal(`${mHead('إضافة سيارة جديدة')}
+    <div class="m-b">
+      <div class="f2">
+        <div class="frow"><label class="lbl2">اسم السيارة (عربي)</label><input class="inp" id="avAr" placeholder="هيونداي إلنترا"></div>
+        <div class="frow"><label class="lbl2">الاسم (إنجليزي)</label><input class="inp" id="avEn" placeholder="Hyundai Elantra"></div>
+      </div>
+      <div class="f2">
+        <div class="frow"><label class="lbl2">سنة الصنع</label><input class="inp" id="avYr" type="number" value="2025"></div>
+        <div class="frow"><label class="lbl2">السعر اليومي (ر.س)</label><input class="inp" id="avDl" type="number" placeholder="200"></div>
+      </div>
+      <div class="f2">
+        <div class="frow"><label class="lbl2">أرقام اللوحة</label><input class="inp" id="avPn" placeholder="1234" style="direction:ltr;text-align:center"></div>
+        <div class="frow"><label class="lbl2">أحرف اللوحة</label><input class="inp" id="avPl" placeholder="أ ب ج" style="text-align:center"></div>
+      </div>
+      <div class="f2">
+        <div class="frow"><label class="lbl2">الفرع</label><select class="inp" id="avBr">${state.branches.map(b=>`<option>${b.name}</option>`).join('')}</select></div>
+        <div class="frow"><label class="lbl2">الممشى الحالي (كم)</label><input class="inp" id="avOd" type="number" value="0"></div>
+      </div>
+    </div>
+    <div class="m-f">
+      <button class="btn btn-primary" onclick="saveVehicle()">${ic('check',15)} إضافة السيارة</button>
+      <button class="btn btn-ghost" onclick="closeModal()">إلغاء</button>
+    </div>`);
+}
+function saveVehicle(){
+  const ar=$('#avAr').value.trim();
+  if(!ar||!+$('#avDl').value){ toast('أدخل اسم السيارة وسعرها اليومي', false); return; }
+  state.vehicles.push({
+    id:'V'+(state.vseq++), ar, en:$('#avEn').value.trim()||ar, year:+$('#avYr').value||2025,
+    plate:{n:$('#avPn').value.trim()||'0000', l:$('#avPl').value.trim()||'أ ب ج'},
+    status:'available', odo:+$('#avOd').value||0, daily:+$('#avDl').value,
+    fuel:100, branch:$('#avBr').value, renter:null, em:'🚙', insp:[]
+  });
+  closeModal(); toast(`تمت إضافة ${ar} إلى الأسطول`); nav('vehicles');
+}
+function openAddCustomer(){
+  openModal(`${mHead('إضافة عميل جديد')}
+    <div class="m-b">
+      <div class="frow"><label class="lbl2">الاسم الكامل</label><input class="inp" id="acNm" placeholder="عبدالله الشهري"></div>
+      <div class="f2">
+        <div class="frow"><label class="lbl2">رقم الجوال</label><input class="inp" id="acPh" placeholder="05xxxxxxxx"></div>
+        <div class="frow"><label class="lbl2">رقم الهوية / الإقامة</label><input class="inp" id="acId" placeholder="1xxxxxxxxx"></div>
+      </div>
+      <div class="hint">سيُطلب توثيق الهوية عبر نفاذ عند أول عقد إيجار</div>
+    </div>
+    <div class="m-f">
+      <button class="btn btn-primary" onclick="saveCustomer()">${ic('check',15)} إضافة العميل</button>
+      <button class="btn btn-ghost" onclick="closeModal()">إلغاء</button>
+    </div>`);
+}
+function saveCustomer(){
+  const n=$('#acNm').value.trim(), p=$('#acPh').value.trim();
+  if(!n||!p){ toast('الاسم ورقم الجوال مطلوبان', false); return; }
+  const raw=$('#acId').value.trim();
+  const nid = raw.length>=6 ? raw.slice(0,4)+'****'+raw.slice(-2) : '10'+Math.floor(10+Math.random()*89)+'****'+Math.floor(10+Math.random()*89);
+  state.customers.push({id:'C'+(state.cseq++), name:n, phone:p, nid, nafath:false, lic:'سارية', rentals:0, spend:0});
+  closeModal(); toast(`تمت إضافة العميل ${n}`); nav('customers');
+}
+function openAddExpense(){
+  openModal(`${mHead('تسجيل مصروف')}
+    <div class="m-b">
+      <div class="frow"><label class="lbl2">الوصف</label><input class="inp" id="aeDs" placeholder="مثال: غسيل وتلميع الأسطول"></div>
+      <div class="f2">
+        <div class="frow"><label class="lbl2">التصنيف</label><select class="inp" id="aeCt">${Object.keys(EXP_COLORS).map(k=>`<option>${k}</option>`).join('')}</select></div>
+        <div class="frow"><label class="lbl2">المبلغ (ر.س)</label><input class="inp" id="aeAm" type="number" placeholder="0"></div>
+      </div>
+      <div class="frow"><label class="lbl2">التاريخ</label><input class="inp" id="aeDt" type="date" value="${today()}"></div>
+    </div>
+    <div class="m-f">
+      <button class="btn btn-primary" onclick="saveExpense()">${ic('check',15)} حفظ المصروف</button>
+      <button class="btn btn-ghost" onclick="closeModal()">إلغاء</button>
+    </div>`);
+}
+function saveExpense(){
+  const a=+$('#aeAm').value, d=$('#aeDs').value.trim();
+  if(!a||!d){ toast('أدخل الوصف والمبلغ', false); return; }
+  state.expenses.unshift({id:'E'+(state.eseq++), date:$('#aeDt').value, cat:$('#aeCt').value, desc:d, amount:a});
+  closeModal(); toast(`سُجّل مصروف ${fmt(a)} ر.س — تحدّثت الأرقام مباشرة`);
+  render();
+}
+function openAddBooking(){
+  const avail=state.vehicles.filter(v=>v.status==='available');
+  openModal(`${mHead('حجز مسبق جديد')}
+    <div class="m-b">
+      <div class="frow"><label class="lbl2">العميل</label><select class="inp" id="abCu">${state.customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+      <div class="frow"><label class="lbl2">السيارة</label><select class="inp" id="abVe">${avail.map(v=>`<option value="${v.id}">${v.em} ${v.ar} ${v.year} — ${fmt(v.daily)} ر.س/يوم</option>`).join('')}</select></div>
+      <div class="f2">
+        <div class="frow"><label class="lbl2">تاريخ الاستلام</label><input class="inp" id="abFr" type="date" value="${addDays(today(),3)}"></div>
+        <div class="frow"><label class="lbl2">عدد الأيام</label><input class="inp" id="abDy" type="number" min="1" value="3"></div>
+      </div>
+    </div>
+    <div class="m-f">
+      <button class="btn btn-primary" onclick="saveBooking()" ${avail.length?'':'disabled'}>${ic('check',15)} تأكيد الحجز</button>
+      <button class="btn btn-ghost" onclick="closeModal()">إلغاء</button>
+    </div>`);
+}
+function saveBooking(){
+  state.bookings.push({id:'BK-'+(state.bseq++), cust:$('#abCu').value, veh:$('#abVe').value, from:$('#abFr').value, days:Math.max(1,+$('#abDy').value||1), status:'مؤكد'});
+  closeModal(); refreshBadges(); toast('تم إنشاء الحجز'); nav('bookings');
+}
+function openAddMaint(){
+  openModal(`${mHead('جدولة صيانة')}
+    <div class="m-b">
+      <div class="frow"><label class="lbl2">السيارة</label><select class="inp" id="amVe">${state.vehicles.map(v=>`<option value="${v.id}">${v.em} ${v.ar} ${v.year}</option>`).join('')}</select></div>
+      <div class="frow"><label class="lbl2">وصف الصيانة</label><input class="inp" id="amTt" placeholder="مثال: تغيير إطارات أمامية"></div>
+      <div class="f2">
+        <div class="frow"><label class="lbl2">التكلفة التقديرية (ر.س)</label><input class="inp" id="amCo" type="number" placeholder="0"></div>
+        <div class="frow"><label class="lbl2">تاريخ الاستحقاق</label><input class="inp" id="amDu" type="date" value="${addDays(today(),7)}"></div>
+      </div>
+      <div class="frow"><label class="lbl2">الأولوية</label><select class="inp" id="amPr"><option>عالية</option><option selected>متوسطة</option><option>منخفضة</option></select></div>
+    </div>
+    <div class="m-f">
+      <button class="btn btn-primary" onclick="saveMaint()">${ic('check',15)} جدولة</button>
+      <button class="btn btn-ghost" onclick="closeModal()">إلغاء</button>
+    </div>`);
+}
+function saveMaint(){
+  const t=$('#amTt').value.trim();
+  if(!t){ toast('أدخل وصف الصيانة', false); return; }
+  state.maintenance.push({id:'M'+(state.mseq++), veh:$('#amVe').value, title:t, status:'مجدولة', cost:+$('#amCo').value||0, due:$('#amDu').value, pr:$('#amPr').value});
+  closeModal(); refreshBadges(); toast('تمت جدولة الصيانة'); nav('maintenance');
+}
+
+/* ================= GLOBAL SEARCH ================= */
+function doSearch(q){
+  q=(q||'').trim().toLowerCase();
+  const pop=$('#searchPop');
+  if(!q){ pop.classList.remove('open'); pop.innerHTML=''; return; }
+  const vs = state.vehicles.filter(v=>(v.ar+' '+v.en+' '+v.plate.n).toLowerCase().includes(q)).slice(0,4);
+  const cs = state.customers.filter(c=>(c.name+' '+c.phone).toLowerCase().includes(q)).slice(0,4);
+  const ts = state.contracts.filter(t=>(t.id+' '+C(t.cust).name+' '+vName(t.veh)).toLowerCase().includes(q)).slice(0,4);
+  let h='';
+  if(vs.length) h+=`<div class="mhead">السيارات</div>`+vs.map(v=>`
+    <div class="mi" onclick="srGo('vehicles', ()=>openVehicle('${v.id}'))"><span style="color:var(--primary)">${ic('car',16)}</span><div><b>${v.em} ${v.ar} ${v.year}</b><span>لوحة ${v.plate.n} · ${VSTAT[v.status].t}</span></div></div>`).join('');
+  if(cs.length) h+=`<div class="mhead">العملاء</div>`+cs.map(c=>`
+    <div class="mi" onclick="srGo('customers')"><span style="color:#16a34a">${ic('users',16)}</span><div><b>${c.name}</b><span>${c.phone}</span></div></div>`).join('');
+  if(ts.length) h+=`<div class="mhead">العقود</div>`+ts.map(t=>`
+    <div class="mi" onclick="srGo('contracts', ()=>openContract('${t.id}'))"><span style="color:#d97706">${ic('file',16)}</span><div><b>${t.id} — ${C(t.cust).name}</b><span>${vName(t.veh)} · ${fmt(t.total)} ر.س</span></div></div>`).join('');
+  if(!h) h=`<div class="mi"><span style="color:var(--faint)">${ic('search',15)}</span><div><b>لا نتائج</b><span>جرّب اسم سيارة أو عميل أو رقم عقد</span></div></div>`;
+  pop.innerHTML=h; pop.classList.add('open');
+}
+function srGo(view, fn){
+  $('#searchPop').classList.remove('open');
+  $('#searchInp').value='';
+  nav(view);
+  if(fn) setTimeout(fn, 120);
+}
+
+/* ================= TOPBAR MENUS + INIT ================= */
+function fillMenus(){
+  $('#notifMenu').innerHTML = `<div class="mhead">الإشعارات</div>` + state.notifications.map(n=>`
+    <div class="mi"><span style="color:${n.c}">${ic(n.ic,16)}</span><div><b>${n.t}</b><span>${n.s}</span></div></div>`).join('');
+  $('#addMenu').innerHTML = [
+    ['file','عقد إيجار جديد','openWizard()','var(--primary)'],
+    ['cal','حجز مسبق','openAddBooking()','#16a34a'],
+    ['car','سيارة للأسطول','openAddVehicle()','#d97706'],
+    ['users','عميل','openAddCustomer()','#8b5cf6'],
+    ['receipt','مصروف','openAddExpense()','#ef4444'],
+  ].map(([i,t,fn,c])=>`<div class="mi" onclick="document.querySelectorAll('.menu.open').forEach(m=>m.classList.remove('open'));${fn}"><span style="color:${c}">${ic(i,16)}</span><b>${t}</b></div>`).join('');
+}
+function init(){
+  $('#logoIc').innerHTML  = ic('car',19,2.2);
+  $('#panelIc').innerHTML = ic('panel',17);
+  $('#searchIc').innerHTML= ic('search',15);
+  $('#bellIc').innerHTML  = ic('bell',17);
+  $('#plusIc').innerHTML  = ic('plus',15,2.6);
+  $('#langIc').innerHTML  = ic('lang',15);
+  $('#langIc2').innerHTML = ic('lang',13);
+  fillMenus();
+  $('#searchInp').insertAdjacentHTML('afterend','<span class="kbd">/</span>');
+  document.querySelectorAll('.bic').forEach(el=> el.innerHTML = ic(el.dataset.i, el.closest('.bfab')?22:19, el.closest('.bfab')?2.6:2));
+  nav('dashboard');
+}
+document.addEventListener('keydown', e=>{
+  const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if(e.key==='/' && !typing){ e.preventDefault(); $('#searchInp').focus(); }
+  if(e.key==='Escape'){
+    $('#searchPop').classList.remove('open');
+    if($('#modalRoot').innerHTML) closeModal();
+  }
+});
+init();
+</script>
+</body>
+</html>
